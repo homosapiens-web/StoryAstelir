@@ -1,0 +1,2615 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Story Atelier｜視覺小說創作與劇情管理工作台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                        serif: ['"Noto Serif TC"', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        atelier: {
+                            bg: '#0f1117',
+                            surface: '#181b24',
+                            card: '#202430',
+                            border: '#2a2f3d',
+                            amber: '#f59e0b',
+                            indigo: '#6366f1',
+                            rose: '#f43f5e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: #0f1117;
+            color: #e2e8f0;
+            font-family: 'Noto Sans TC', sans-serif;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f1117;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2f3d;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .canvas-grid {
+            background-color: #0b0d12;
+            background-image: radial-gradient(circle, #282e3d 1.25px, transparent 1.25px);
+            background-size: 24px 24px;
+        }
+        .manuscript-editor {
+            font-family: 'Noto Serif TC', serif;
+            line-height: 1.95;
+            letter-spacing: 0.03em;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row bg-atelier-bg text-slate-200 selection:bg-amber-500/30 selection:text-amber-200">
+
+    <!-- ================= 桌面版左側導覽欄 ================= -->
+    <aside class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-atelier-surface border-r border-atelier-border z-30">
+        <div class="p-5 border-b border-atelier-border">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-indigo-600 flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-amber-500/20">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base tracking-wide text-slate-100">Story Atelier</h1>
+                    <p class="text-[11px] text-slate-400">視覺小說創作與劇情管理工作台</p>
+                </div>
+            </div>
+
+            <!-- 獨立專案切換器 -->
+            <div class="mt-4">
+                <div class="flex items-center justify-between mb-1">
+                    <label class="text-[11px] text-slate-400">目前編輯作品專案</label>
+                    <button onclick="openNewProjectModal()" class="text-[11px] text-amber-400 hover:underline">+ 新專案</button>
+                </div>
+                <select id="desktop-project-select" onchange="switchProject(this.value)" class="w-full bg-atelier-card border border-atelier-border rounded-lg px-2.5 py-2 text-xs font-medium text-amber-300 focus:outline-none focus:border-amber-500"></select>
+            </div>
+        </div>
+
+        <nav class="flex-1 p-3 space-y-1.5 overflow-y-auto">
+            <button onclick="switchTab('overview')" data-nav="overview" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                <span>總覽</span>
+            </button>
+            <button onclick="switchTab('plot')" data-nav="plot" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>劇情與分支畫布</span>
+            </button>
+            <button onclick="switchTab('characters')" data-nav="characters" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span>角色與關係圖譜</span>
+            </button>
+            <button onclick="switchTab('mechanics')" data-nav="mechanics" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>機制（記憶・輪迴・讀檔）</span>
+            </button>
+            <button onclick="switchTab('backup')" data-nav="backup" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                <span>備份與專案管理</span>
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-atelier-border bg-atelier-bg/60">
+            <div class="flex items-center gap-1.5 text-xs text-emerald-400">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span id="desktop-save-status">已自動儲存至本機</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ================= 手機版頂部狀態列 ================= -->
+    <header class="md:hidden sticky top-0 z-30 bg-atelier-surface/95 backdrop-blur-md border-b border-atelier-border px-3.5 py-2.5 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 min-w-0 flex-1">
+            <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-indigo-600 flex-shrink-0 flex items-center justify-center text-slate-950 font-bold text-xs shadow">
+                SA
+            </div>
+            <div class="min-w-0 flex-1">
+                <div class="text-[10px] font-bold tracking-wider text-slate-400 uppercase leading-none mb-0.5">Story Atelier</div>
+                <select id="mobile-project-select" onchange="switchProject(this.value)" class="w-full bg-transparent text-xs font-bold text-amber-300 truncate focus:outline-none"></select>
+            </div>
+        </div>
+        <span id="mobile-save-status" class="text-[11px] text-emerald-400 flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 flex-shrink-0">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>已儲存
+        </span>
+    </header>
+
+    <!-- ================= 主內容工作區 ================= -->
+    <main class="flex-1 md:pl-64 pb-24 md:pb-10 min-h-screen">
+
+        <!-- 1. 總覽分頁 (Overview) -->
+        <section id="view-overview" class="tab-view p-4 sm:p-6 md:p-8 max-w-5xl mx-auto space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-atelier-surface border border-atelier-border rounded-2xl p-5 sm:p-6">
+                <div class="space-y-1 flex-1">
+                    <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30 mb-1">
+                        Story Atelier ・ 作品專案檔案
+                    </div>
+                    <input id="overview-title-input" type="text" onchange="updateProjectMeta('title', this.value)" class="w-full bg-transparent text-xl sm:text-2xl font-bold text-slate-100 focus:outline-none focus:border-b focus:border-amber-500 pb-1" placeholder="輸入作品專案標題...">
+                    <input id="overview-subtitle-input" type="text" onchange="updateProjectMeta('subtitle', this.value)" class="w-full bg-transparent text-xs sm:text-sm text-slate-400 focus:outline-none focus:border-b focus:border-amber-500" placeholder="副標題或核心主題標語...">
+                </div>
+                <button onclick="openNewProjectModal()" class="self-start px-3.5 py-2 rounded-xl bg-atelier-card hover:bg-slate-700 border border-atelier-border text-xs font-medium text-slate-200 transition active:scale-95">
+                    + 新建作品專案
+                </button>
+            </div>
+
+            <!-- 專案統計卡片 -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div onclick="switchTab('plot')" class="cursor-pointer bg-atelier-surface hover:border-amber-500/50 border border-atelier-border rounded-2xl p-4 transition">
+                    <div class="text-xs text-slate-400">劇情節點數</div>
+                    <div id="stat-nodes" class="text-2xl sm:text-3xl font-bold text-amber-400 mt-1 font-mono">0</div>
+                    <div class="text-[11px] text-slate-500 mt-1">列表與分支畫布 →</div>
+                </div>
+                <div onclick="switchTab('plot')" class="cursor-pointer bg-atelier-surface hover:border-amber-500/50 border border-atelier-border rounded-2xl p-4 transition">
+                    <div class="text-xs text-slate-400">劇本總字數</div>
+                    <div id="stat-words" class="text-2xl sm:text-3xl font-bold text-slate-100 mt-1 font-mono">0</div>
+                    <div class="text-[11px] text-slate-500 mt-1">長篇筆記累積字數</div>
+                </div>
+                <div onclick="switchTab('characters')" class="cursor-pointer bg-atelier-surface hover:border-indigo-500/50 border border-atelier-border rounded-2xl p-4 transition">
+                    <div class="text-xs text-slate-400">角色 / 關係連線</div>
+                    <div id="stat-chars" class="text-2xl sm:text-3xl font-bold text-indigo-400 mt-1 font-mono">0 / 0</div>
+                    <div class="text-[11px] text-slate-500 mt-1">頭像與自訂關係圖 →</div>
+                </div>
+                <div onclick="switchTab('mechanics')" class="cursor-pointer bg-atelier-surface hover:border-rose-500/50 border border-atelier-border rounded-2xl p-4 transition">
+                    <div class="text-xs text-slate-400">記憶 / 輪迴紀錄</div>
+                    <div id="stat-mechanics" class="text-2xl sm:text-3xl font-bold text-rose-400 mt-1 font-mono">0 / 0</div>
+                    <div class="text-[11px] text-slate-500 mt-1">輪迴與讀檔印記 →</div>
+                </div>
+            </div>
+
+            <!-- 世界觀設定與核心大綱 -->
+            <div class="bg-atelier-surface border border-atelier-border rounded-2xl p-5 sm:p-6 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                        <span class="w-1.5 h-4 rounded-full bg-amber-500"></span>
+                        世界觀設定與核心法則筆記
+                    </h2>
+                    <span class="text-xs text-slate-400">即時自動儲存</span>
+                </div>
+                <textarea id="overview-worldview-input" oninput="updateProjectMeta('worldview', this.value)" rows="7" class="w-full bg-atelier-bg border border-atelier-border rounded-xl p-4 text-sm sm:text-base text-slate-200 manuscript-editor focus:outline-none focus:border-amber-500 resize-y" placeholder="在此記錄作品的世界觀規則、時間線、能力代價與核心主題..."></textarea>
+            </div>
+        </section>
+
+        <!-- 2. 劇情與分支畫布分頁 (Plot List + Pan/Zoom Branching Canvas) -->
+        <section id="view-plot" class="tab-view hidden p-4 sm:p-6 md:p-8 max-w-6xl mx-auto space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center bg-atelier-surface border border-atelier-border p-1 rounded-xl">
+                    <button id="btn-plot-list-mode" onclick="setPlotViewMode('list')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition">
+                        列表筆記模式
+                    </button>
+                    <button id="btn-plot-canvas-mode" onclick="setPlotViewMode('canvas')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition">
+                        分支畫布模式
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="btn-canvas-connect-mode" onclick="toggleCanvasConnectMode()" class="hidden px-3 py-2 rounded-xl bg-atelier-surface hover:bg-atelier-card border border-atelier-border text-xs font-medium text-slate-200 transition">
+                        🔗 連線模式：關
+                    </button>
+                    <button onclick="createNewPlotNode()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition active:scale-95">
+                        + 新增節點
+                    </button>
+                </div>
+            </div>
+
+            <!-- 搜尋與篩選列 -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 bg-atelier-surface border border-atelier-border p-3 rounded-2xl">
+                <div class="sm:col-span-6 relative">
+                    <input id="plot-search-input" type="text" oninput="refreshPlotViews()" placeholder="搜尋節點標題、場景、正文關鍵字..." class="w-full bg-atelier-bg border border-atelier-border rounded-xl pl-9 pr-3 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                    <svg class="w-4 h-4 text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <div class="sm:col-span-3">
+                    <select id="plot-type-filter" onchange="refreshPlotViews()" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-300 focus:outline-none focus:border-amber-500">
+                        <option value="ALL">所有節點類型</option>
+                        <option value="一般劇情">一般劇情</option>
+                        <option value="選項分支">選項分支</option>
+                        <option value="分支匯合">分支匯合</option>
+                        <option value="特殊事件">特殊事件</option>
+                        <option value="條件判斷">條件判斷</option>
+                        <option value="輪迴節點">輪迴節點</option>
+                        <option value="結局">結局</option>
+                    </select>
+                </div>
+                <div class="sm:col-span-3">
+                    <select id="plot-char-filter" onchange="refreshPlotViews()" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-300 focus:outline-none focus:border-amber-500">
+                        <option value="ALL">所有出場角色</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- A. 列表模式 -->
+            <div id="plot-list-container" class="space-y-3"></div>
+
+            <!-- B. 可自由平移與縮放的分支畫布模式 -->
+            <div id="plot-canvas-container" class="hidden relative w-full h-[70vh] min-h-[480px] rounded-2xl border border-atelier-border overflow-hidden canvas-grid select-none touch-none">
+                <!-- 操作提示 -->
+                <div class="absolute top-3 left-3 z-20 bg-atelier-surface/90 backdrop-blur border border-atelier-border px-3 py-1.5 rounded-xl text-[11px] text-slate-300 pointer-events-none max-w-[75%]">
+                    <span id="plot-canvas-hint">空白處拖曳平移畫面 ・ 滾輪/雙指縮放 ・ 拖曳卡片移動節點</span>
+                </div>
+
+                <!-- 右下角縮放與重置視角控制列 -->
+                <div class="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 bg-atelier-surface/95 backdrop-blur border border-atelier-border p-1.5 rounded-xl shadow-xl">
+                    <button onclick="plotCanvasCtrl.zoomBy(-0.15)" class="w-8 h-8 rounded-lg hover:bg-slate-700 text-slate-200 font-bold text-base">－</button>
+                    <span id="plot-canvas-zoom-label" class="text-xs font-mono px-2 text-amber-300">100%</span>
+                    <button onclick="plotCanvasCtrl.zoomBy(0.15)" class="w-8 h-8 rounded-lg hover:bg-slate-700 text-slate-200 font-bold text-base">＋</button>
+                    <button onclick="plotCanvasCtrl.reset()" class="px-2.5 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200">置中重置</button>
+                </div>
+
+                <!-- 畫布視口與世界層 -->
+                <div id="plot-canvas-viewport" class="w-full h-full relative cursor-grab active:cursor-grabbing">
+                    <div id="plot-canvas-world" class="absolute top-0 left-0 origin-top-left" style="width: 3600px; height: 2600px;">
+                        <svg id="plot-canvas-edges" class="absolute inset-0 w-full h-full pointer-events-none"></svg>
+                        <div id="plot-canvas-nodes" class="absolute inset-0"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 角色與關係圖譜分頁 (Characters DB + Fully Customizable Relationship Graph) -->
+        <section id="view-characters" class="tab-view hidden p-4 sm:p-6 md:p-8 max-w-6xl mx-auto space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center bg-atelier-surface border border-atelier-border p-1 rounded-xl">
+                    <button id="btn-char-list-mode" onclick="setCharViewMode('list')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition">
+                        角色資料庫
+                    </button>
+                    <button id="btn-char-graph-mode" onclick="setCharViewMode('graph')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition">
+                        自定義關係圖
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="btn-add-relation" onclick="openRelationModal()" class="hidden px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition active:scale-95">
+                        + 新增自定義關係
+                    </button>
+                    <button onclick="createNewCharacter()" class="px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs sm:text-sm shadow-lg shadow-indigo-500/20 transition active:scale-95">
+                        + 新增角色
+                    </button>
+                </div>
+            </div>
+
+            <!-- A. 角色列表子視圖 -->
+            <div id="char-list-subview" class="space-y-4">
+                <div class="flex flex-col sm:flex-row gap-2.5 bg-atelier-surface border border-atelier-border p-3 rounded-2xl">
+                    <input id="char-search-input" type="text" oninput="renderCharacterList()" placeholder="搜尋角色姓名、稱號、國度或能力..." class="flex-1 bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                    <select id="char-faction-filter" onchange="renderCharacterList()" class="bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-300 focus:outline-none focus:border-indigo-500">
+                        <option value="ALL">所有立場陣營</option>
+                        <option value="主角方">主角方</option>
+                        <option value="敵對方">敵對方</option>
+                        <option value="中立方">中立方</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+
+                <div id="character-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- B. 互動式自定義角色關係圖子視圖 -->
+            <div id="char-graph-subview" class="hidden space-y-3">
+                <div class="relative w-full h-[70vh] min-h-[480px] rounded-2xl border border-atelier-border overflow-hidden canvas-grid select-none touch-none">
+                    <div class="absolute top-3 left-3 z-20 bg-atelier-surface/90 backdrop-blur border border-atelier-border px-3 py-1.5 rounded-xl text-[11px] text-slate-300 pointer-events-none max-w-[75%]">
+                        空白處拖曳平移 ・ 拖曳角色頭像擺位 ・ 點擊關係標籤可直接修改或刪除
+                    </div>
+
+                    <!-- 關係圖縮放控制 -->
+                    <div class="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 bg-atelier-surface/95 backdrop-blur border border-atelier-border p-1.5 rounded-xl shadow-xl">
+                        <button onclick="relCanvasCtrl.zoomBy(-0.15)" class="w-8 h-8 rounded-lg hover:bg-slate-700 text-slate-200 font-bold text-base">－</button>
+                        <span id="rel-canvas-zoom-label" class="text-xs font-mono px-2 text-indigo-300">100%</span>
+                        <button onclick="relCanvasCtrl.zoomBy(0.15)" class="w-8 h-8 rounded-lg hover:bg-slate-700 text-slate-200 font-bold text-base">＋</button>
+                        <button onclick="relCanvasCtrl.reset()" class="px-2.5 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200">置中重置</button>
+                    </div>
+
+                    <div id="rel-canvas-viewport" class="w-full h-full relative cursor-grab active:cursor-grabbing">
+                        <div id="rel-canvas-world" class="absolute top-0 left-0 origin-top-left" style="width: 3200px; height: 2400px;">
+                            <svg id="rel-canvas-edges" class="absolute inset-0 w-full h-full"></svg>
+                            <div id="rel-canvas-labels" class="absolute inset-0 pointer-events-none"></div>
+                            <div id="rel-canvas-nodes" class="absolute inset-0"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 機制（記憶・輪迴・讀檔）分頁 -->
+        <section id="view-mechanics" class="tab-view hidden p-4 sm:p-6 md:p-8 max-w-5xl mx-auto space-y-5">
+            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                <button onclick="switchMechSubTab('memories')" data-mech="memories" class="mech-sub-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap border transition">
+                    1. 記憶管理系統
+                </button>
+                <button onclick="switchMechSubTab('loops')" data-mech="loops" class="mech-sub-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap border transition">
+                    2. 輪迴紀錄系統
+                </button>
+                <button onclick="switchMechSubTab('anchor')" data-mech="anchor" class="mech-sub-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap border transition">
+                    3. 存檔印記與讀檔限制
+                </button>
+            </div>
+
+            <!-- 記憶管理系統 -->
+            <div id="mech-panel-memories" class="mech-panel space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 bg-atelier-surface border border-atelier-border p-4 rounded-2xl">
+                    <div>
+                        <h3 class="font-bold text-slate-100 text-base">跨輪迴記憶資料庫</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">管理記憶分類、保留輪數衰退、永久記憶與解鎖劇情反向關聯</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="simulateNextLoopDecay()" class="px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-medium transition">
+                            模擬進入下一輪（計算衰退）
+                        </button>
+                        <button onclick="openMemoryModal()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition">
+                            + 新增記憶
+                        </button>
+                    </div>
+                </div>
+                <div id="memory-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <!-- 輪迴紀錄系統 -->
+            <div id="mech-panel-loops" class="mech-panel hidden space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 bg-atelier-surface border border-atelier-border p-4 rounded-2xl">
+                    <div>
+                        <h3 class="font-bold text-slate-100 text-base">輪迴歷程紀錄</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">明確區分「正常輪迴結束」與「能力過度使用造成的強制重置」</p>
+                    </div>
+                    <button onclick="openLoopModal()" class="px-3.5 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs transition">
+                        + 新增輪迴紀錄
+                    </button>
+                </div>
+                <div id="loop-list-container" class="space-y-3"></div>
+            </div>
+
+            <!-- 存檔印記與讀檔限制系統 -->
+            <div id="mech-panel-anchor" class="mech-panel hidden space-y-4">
+                <div class="bg-atelier-surface border border-atelier-border rounded-2xl p-5 space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-atelier-border pb-4">
+                        <div>
+                            <h3 class="font-bold text-amber-300 text-base">［讀檔］印記與使用上限控制台</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">每輪僅能存在一個有效印記；標的物破壞則失效；達使用上限觸發強制重置</p>
+                        </div>
+                        <span id="anchor-status-badge" class="self-start px-3 py-1 rounded-full text-xs font-bold">印記有效</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">目前印記依附標的物</label>
+                            <input id="anchor-target-input" type="text" onchange="updateAnchorData('target', this.value)" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">印記刻錄時間點</label>
+                            <input id="anchor-time-input" type="text" onchange="updateAnchorData('timestamp', this.value)" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">本輪已使用讀檔次數</label>
+                            <div class="flex items-center gap-2">
+                                <input id="anchor-used-input" type="number" min="0" onchange="updateAnchorData('usedCount', parseInt(this.value)||0)" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm font-mono text-slate-100 focus:outline-none focus:border-amber-500">
+                                <button onclick="triggerAnchorLoadTest()" class="px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold whitespace-nowrap">
+                                    模擬讀檔 +1
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">讀檔使用次數上限（創作者自訂）</label>
+                            <input id="anchor-max-input" type="number" min="1" onchange="updateAnchorData('maxLimit', parseInt(this.value)||1)" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm font-mono text-slate-100 focus:outline-none focus:border-amber-500">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-atelier-border">
+                        <label class="flex items-center gap-2.5 cursor-pointer">
+                            <input id="anchor-valid-checkbox" type="checkbox" onchange="updateAnchorData('isValid', this.checked)" class="w-4 h-4 accent-amber-500 rounded">
+                            <span class="text-sm text-slate-200">標的物完好（印記有效）</span>
+                        </label>
+                        <button onclick="recordNewAnchorOverwrite()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-atelier-border text-xs text-slate-200">
+                            記錄新的印記覆蓋
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-slate-400">印記覆蓋與強制重置歷史紀錄</div>
+                        <div id="anchor-logs-list" class="bg-atelier-bg border border-atelier-border rounded-xl p-3 max-h-48 overflow-y-auto space-y-2 text-xs text-slate-300 font-mono"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. 備份與專案管理分頁 -->
+        <section id="view-backup" class="tab-view hidden p-4 sm:p-6 md:p-8 max-w-4xl mx-auto space-y-6">
+            <div class="bg-atelier-surface border border-atelier-border rounded-2xl p-5 sm:p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-100">Story Atelier 作品專案清單</h2>
+                        <p class="text-xs text-slate-400">可自由建立多個完全獨立的作品專案，互不干擾</p>
+                    </div>
+                    <button onclick="openNewProjectModal()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition">
+                        + 建立新專案
+                    </button>
+                </div>
+                <div id="project-manager-list" class="space-y-2.5"></div>
+            </div>
+
+            <div class="bg-atelier-surface border border-atelier-border rounded-2xl p-5 sm:p-6 space-y-4">
+                <div>
+                    <h2 class="text-base sm:text-lg font-bold text-slate-100">本機自動儲存與 JSON 備份還原</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">所有文字、頭像圖片、關係圖座標與設定皆會自動保存於瀏覽器；建議定期匯出 JSON 備份</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <button onclick="exportAllDataJSON()" class="flex flex-col items-start p-4 rounded-xl bg-atelier-card hover:bg-slate-800 border border-atelier-border transition text-left">
+                        <span class="text-sm font-bold text-emerald-400">⬇ 匯出完整工作台備份 (.json)</span>
+                        <span class="text-xs text-slate-400 mt-1">包含所有作品專案、劇情正文、頭像與自訂關係圖</span>
+                    </button>
+
+                    <label class="flex flex-col items-start p-4 rounded-xl bg-atelier-card hover:bg-slate-800 border border-atelier-border transition text-left cursor-pointer">
+                        <span class="text-sm font-bold text-amber-400">⬆ 匯入 JSON 備份還原</span>
+                        <span class="text-xs text-slate-400 mt-1">選擇先前匯出的 .json 備份檔進行還原</span>
+                        <input type="file" accept=".json" onchange="importDataJSON(event)" class="hidden">
+                    </label>
+                </div>
+
+                <div class="pt-4 border-t border-atelier-border flex justify-between items-center">
+                    <span class="text-xs text-slate-500">恢復初始範例專案資料</span>
+                    <button onclick="resetToDefaultDemo()" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs transition">
+                        還原預設範例資料
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ================= 手機版底部固定導覽列 ================= -->
+    <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-atelier-surface/95 backdrop-blur-md border-t border-atelier-border flex items-center justify-around py-1.5 px-1">
+        <button onclick="switchTab('overview')" data-nav="overview" class="nav-btn flex-1 flex flex-col items-center py-1.5 rounded-xl text-[11px] font-medium">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+            <span>總覽</span>
+        </button>
+        <button onclick="switchTab('plot')" data-nav="plot" class="nav-btn flex-1 flex flex-col items-center py-1.5 rounded-xl text-[11px] font-medium">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>劇情</span>
+        </button>
+        <button onclick="switchTab('characters')" data-nav="characters" class="nav-btn flex-1 flex flex-col items-center py-1.5 rounded-xl text-[11px] font-medium">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span>角色</span>
+        </button>
+        <button onclick="switchTab('mechanics')" data-nav="mechanics" class="nav-btn flex-1 flex flex-col items-center py-1.5 rounded-xl text-[11px] font-medium">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>機制</span>
+        </button>
+        <button onclick="switchTab('backup')" data-nav="backup" class="nav-btn flex-1 flex flex-col items-center py-1.5 rounded-xl text-[11px] font-medium">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            <span>備份</span>
+        </button>
+    </nav>
+
+    <!-- ================= 全螢幕劇情節點編輯器 Modal ================= -->
+    <div id="plot-editor-modal" class="hidden fixed inset-0 z-50 bg-atelier-bg flex flex-col">
+        <div class="bg-atelier-surface border-b border-atelier-border px-4 py-3 flex items-center justify-between gap-3">
+            <button onclick="closePlotEditor()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-atelier-card hover:bg-slate-700 text-xs sm:text-sm font-medium text-slate-200">
+                ← 返回工作台
+            </button>
+            <div class="flex items-center gap-3">
+                <span id="editor-word-count" class="text-xs font-mono text-slate-400">0 字</span>
+                <button onclick="deleteCurrentPlotNode()" class="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-xs font-medium">
+                    刪除節點
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto">
+            <div class="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 space-y-5">
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    <div class="sm:col-span-8">
+                        <label class="text-[11px] text-slate-400 block mb-1">節點標題</label>
+                        <input id="edit-node-title" type="text" oninput="autoSaveCurrentNode()" class="w-full bg-atelier-surface border border-atelier-border rounded-xl px-4 py-2.5 text-base sm:text-lg font-bold text-slate-100 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div class="sm:col-span-4">
+                        <label class="text-[11px] text-slate-400 block mb-1">節點類型</label>
+                        <select id="edit-node-type" onchange="autoSaveCurrentNode()" class="w-full bg-atelier-surface border border-atelier-border rounded-xl px-3.5 py-2.5 text-sm text-amber-300 font-medium focus:outline-none focus:border-amber-500">
+                            <option value="一般劇情">一般劇情</option>
+                            <option value="選項分支">選項分支</option>
+                            <option value="分支匯合">分支匯合</option>
+                            <option value="特殊事件">特殊事件</option>
+                            <option value="條件判斷">條件判斷</option>
+                            <option value="輪迴節點">輪迴節點</option>
+                            <option value="結局">結局</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-atelier-surface border border-atelier-border p-4 rounded-2xl">
+                    <div>
+                        <label class="text-[11px] text-slate-400 block mb-1">場景資訊</label>
+                        <input id="edit-node-scene" type="text" oninput="autoSaveCurrentNode()" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-400 block mb-1">前置條件 / 旗標</label>
+                        <input id="edit-node-condition" type="text" oninput="autoSaveCurrentNode()" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-400 block mb-1">所需記憶條件（連動）</label>
+                        <select id="edit-node-memory-req" onchange="autoSaveCurrentNode()" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500"></select>
+                    </div>
+                </div>
+
+                <div class="bg-atelier-surface border border-atelier-border p-4 rounded-2xl space-y-2">
+                    <label class="text-[11px] text-slate-400 block">出場角色（點擊切換，未命名角色將自動顯示其稱號）</label>
+                    <div id="edit-node-chars-selector" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] text-slate-400 block mb-1">劇情摘要</label>
+                    <input id="edit-node-summary" type="text" oninput="autoSaveCurrentNode()" class="w-full bg-atelier-surface border border-atelier-border rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                </div>
+
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-bold text-amber-300">完整劇情正文 / 視覺小說腳本</label>
+                        <span class="text-[11px] text-slate-400">即時自動儲存</span>
+                    </div>
+                    <textarea id="edit-node-content" oninput="autoSaveCurrentNode()" rows="18" class="w-full bg-atelier-surface border border-atelier-border rounded-2xl p-4 sm:p-6 text-base sm:text-lg text-slate-100 manuscript-editor focus:outline-none focus:border-amber-500 resize-y"></textarea>
+                </div>
+
+                <div class="bg-atelier-surface border border-atelier-border p-4 rounded-2xl space-y-2">
+                    <label class="text-xs font-bold text-slate-300 block">後續連接節點（支援多條分支與重新匯合）</label>
+                    <div id="edit-node-next-selector" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] text-slate-400 block mb-1">創作者備註 / 演出提示</label>
+                    <textarea id="edit-node-notes" oninput="autoSaveCurrentNode()" rows="3" class="w-full bg-atelier-surface border border-atelier-border rounded-xl p-3 text-xs sm:text-sm text-slate-300 focus:outline-none focus:border-amber-500"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 全螢幕角色編輯器 Modal（含頭像上傳與未命名支持） ================= -->
+    <div id="char-editor-modal" class="hidden fixed inset-0 z-50 bg-atelier-bg flex flex-col">
+        <div class="bg-atelier-surface border-b border-atelier-border px-4 py-3 flex items-center justify-between gap-3">
+            <button onclick="closeCharEditor()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-atelier-card hover:bg-slate-700 text-xs sm:text-sm font-medium text-slate-200">
+                ← 返回角色庫
+            </button>
+            <button onclick="deleteCurrentCharacter()" class="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-xs font-medium">
+                刪除角色
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto">
+            <div class="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 space-y-5">
+                
+                <!-- 頭像上傳與基本識別資訊 -->
+                <div class="bg-atelier-surface border border-atelier-border rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                    <div class="flex flex-col items-center gap-2 flex-shrink-0">
+                        <div id="edit-char-avatar-preview" class="w-24 h-24 rounded-full bg-atelier-card border-2 border-indigo-500/50 overflow-hidden flex items-center justify-center text-2xl font-bold text-indigo-300 shadow-lg">
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <label class="cursor-pointer px-2.5 py-1 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-[11px] font-bold transition">
+                                上傳頭像
+                                <input type="file" accept="image/*" onchange="handleAvatarUpload(event)" class="hidden">
+                            </label>
+                            <button id="btn-remove-avatar" type="button" onclick="removeCharacterAvatar()" class="hidden px-2 py-1 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 text-[11px]">
+                                移除
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 w-full grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">角色姓名（未取名可留空）</label>
+                            <input id="edit-char-name" type="text" oninput="autoSaveCurrentChar()" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm font-bold text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="留空則自動顯示稱號">
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">稱號 / 祝福代號</label>
+                            <input id="edit-char-title" type="text" oninput="autoSaveCurrentChar()" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-amber-300 font-medium focus:outline-none focus:border-indigo-500" placeholder="例如：奇詭、空間、時間">
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">立場陣營</label>
+                            <select id="edit-char-faction" onchange="autoSaveCurrentChar()" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                                <option value="主角方">主角方</option>
+                                <option value="敵對方">敵對方</option>
+                                <option value="中立方">中立方</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label class="text-[11px] text-slate-400 block mb-1">出身國度 / 所屬勢力</label>
+                            <input id="edit-char-origin" type="text" oninput="autoSaveCurrentChar()" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[11px] text-slate-400 block mb-1">外貌特徵</label>
+                        <input id="edit-char-appearance" type="text" oninput="autoSaveCurrentChar()" class="w-full bg-atelier-surface border border-atelier-border rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-400 block mb-1">性格與心理特質</label>
+                        <input id="edit-char-personality" type="text" oninput="autoSaveCurrentChar()" class="w-full bg-atelier-surface border border-atelier-border rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] text-slate-400 block mb-1">能力與技能代價</label>
+                    <textarea id="edit-char-abilities" oninput="autoSaveCurrentChar()" rows="3" class="w-full bg-atelier-surface border border-atelier-border rounded-xl p-3.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="text-[11px] text-slate-400 block mb-1">代表台詞</label>
+                    <textarea id="edit-char-quotes" oninput="autoSaveCurrentChar()" rows="2" class="w-full bg-atelier-surface border border-atelier-border rounded-xl p-3.5 text-sm text-amber-200/90 italic focus:outline-none focus:border-indigo-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="text-[11px] text-slate-400 block mb-1">背景故事與人物經歷</label>
+                    <textarea id="edit-char-backstory" oninput="autoSaveCurrentChar()" rows="5" class="w-full bg-atelier-surface border border-atelier-border rounded-xl p-4 text-sm text-slate-200 manuscript-editor focus:outline-none focus:border-indigo-500"></textarea>
+                </div>
+
+                <!-- 反向查詢：出場劇情 -->
+                <div class="bg-atelier-surface border border-indigo-500/30 rounded-2xl p-4 space-y-3">
+                    <h3 class="text-sm font-bold text-indigo-300 flex items-center gap-2">
+                        <span>出場劇情反向查詢</span>
+                        <span id="char-appearance-count" class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-xs font-mono">0</span>
+                    </h3>
+                    <div id="char-appearances-list" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 完全自定義角色關係編輯 Modal ================= -->
+    <div id="relation-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-atelier-surface border border-atelier-border rounded-2xl w-full max-w-lg p-5 sm:p-6 space-y-4 max-h-[92vh] overflow-y-auto shadow-2xl">
+            <div class="flex items-center justify-between border-b border-atelier-border pb-3">
+                <h3 id="relation-modal-title" class="font-bold text-base text-amber-300">自定義角色關係</h3>
+                <button onclick="closeRelationModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+            </div>
+
+            <div class="space-y-3.5">
+                <!-- 選擇角色 A 與 角色 B -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">角色 A（起點）</label>
+                        <select id="rel-from-select" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-amber-500"></select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">角色 B（對象）</label>
+                        <select id="rel-to-select" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-amber-500"></select>
+                    </div>
+                </div>
+
+                <!-- 方向性設定 -->
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">關係箭頭方向</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="cursor-pointer flex items-center justify-center gap-1.5 p-2 rounded-xl bg-atelier-bg border border-atelier-border text-xs text-slate-200">
+                            <input type="radio" name="rel-direction" value="directed" checked class="accent-amber-500"> 單向 A → B
+                        </label>
+                        <label class="cursor-pointer flex items-center justify-center gap-1.5 p-2 rounded-xl bg-atelier-bg border border-atelier-border text-xs text-slate-200">
+                            <input type="radio" name="rel-direction" value="bidirectional" class="accent-amber-500"> 雙向 A ↔ B
+                        </label>
+                        <label class="cursor-pointer flex items-center justify-center gap-1.5 p-2 rounded-xl bg-atelier-bg border border-atelier-border text-xs text-slate-200">
+                            <input type="radio" name="rel-direction" value="undirected" class="accent-amber-500"> 無方向 A — B
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 完全自定義關係文字 + 快速參考標籤 -->
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">自定義關係標籤（顯示於連線中央）</label>
+                    <input id="rel-label-input" type="text" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm font-bold text-slate-100 focus:outline-none focus:border-amber-500" placeholder="自由輸入任何關係，例如：青梅竹馬、單方面實驗利用...">
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        <span class="text-[11px] text-slate-500 self-center">快速填入：</span>
+                        <button type="button" onclick="fillRelPreset('青梅竹馬')" class="px-2 py-0.5 rounded bg-atelier-card hover:bg-slate-700 text-[11px] text-slate-300">青梅竹馬</button>
+                        <button type="button" onclick="fillRelPreset('誓言拯救')" class="px-2 py-0.5 rounded bg-atelier-card hover:bg-slate-700 text-[11px] text-slate-300">誓言拯救</button>
+                        <button type="button" onclick="fillRelPreset('精神支配傀儡')" class="px-2 py-0.5 rounded bg-atelier-card hover:bg-slate-700 text-[11px] text-slate-300">精神支配傀儡</button>
+                        <button type="button" onclick="fillRelPreset('利用與實驗')" class="px-2 py-0.5 rounded bg-atelier-card hover:bg-slate-700 text-[11px] text-slate-300">利用與實驗</button>
+                        <button type="button" onclick="fillRelPreset('警惕防備')" class="px-2 py-0.5 rounded bg-atelier-card hover:bg-slate-700 text-[11px] text-slate-300">警惕防備</button>
+                    </div>
+                </div>
+
+                <!-- 自定義連線顏色與線條樣式 -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">連線顏色（可自選色票）</label>
+                        <div class="flex items-center gap-2">
+                            <input id="rel-color-input" type="color" value="#f59e0b" class="w-10 h-9 rounded-lg bg-atelier-bg border border-atelier-border cursor-pointer">
+                            <div class="flex gap-1.5">
+                                <button type="button" onclick="setRelColor('#f59e0b')" class="w-5 h-5 rounded-full bg-[#f59e0b] border border-white/20"></button>
+                                <button type="button" onclick="setRelColor('#38bdf8')" class="w-5 h-5 rounded-full bg-[#38bdf8] border border-white/20"></button>
+                                <button type="button" onclick="setRelColor('#f43f5e')" class="w-5 h-5 rounded-full bg-[#f43f5e] border border-white/20"></button>
+                                <button type="button" onclick="setRelColor('#a855f7')" class="w-5 h-5 rounded-full bg-[#a855f7] border border-white/20"></button>
+                                <button type="button" onclick="setRelColor('#10b981')" class="w-5 h-5 rounded-full bg-[#10b981] border border-white/20"></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">線條樣式</label>
+                        <select id="rel-style-select" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                            <option value="solid">實線（明確羈絆 / 契約）</option>
+                            <option value="dashed">虛線（單向認知 / 暗中監視）</option>
+                            <option value="dotted">點線（隱藏秘密 / 過去因果）</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 詳細關係備註 -->
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">關係細節備註（隱藏伏筆或單方面認知差異）</label>
+                    <textarea id="rel-note-input" rows="2" class="w-full bg-atelier-bg border border-atelier-border rounded-xl p-3 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-amber-500" placeholder="補充這段關係在劇情中的細節與轉折..."></textarea>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-atelier-border">
+                <button id="btn-delete-relation" type="button" onclick="deleteEditingRelation()" class="hidden px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-xs font-medium mr-auto">
+                    刪除此關係
+                </button>
+                <button type="button" onclick="closeRelationModal()" class="px-4 py-2 rounded-xl bg-atelier-card text-xs text-slate-300">取消</button>
+                <button type="button" onclick="saveRelationForm()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs">儲存關係</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 新增 / 編輯記憶 Modal ================= -->
+    <div id="memory-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-atelier-surface border border-atelier-border rounded-2xl w-full max-w-lg p-5 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-atelier-border pb-3">
+                <h3 class="font-bold text-base text-amber-300">編輯記憶資料</h3>
+                <button onclick="closeMemoryModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">記憶名稱</label>
+                    <input id="mem-title" type="text" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-sm text-slate-100">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">記憶分類</label>
+                        <select id="mem-category" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-sm text-slate-200">
+                            <option value="人物情報">人物情報</option>
+                            <option value="世界情報">世界情報</option>
+                            <option value="事件情報">事件情報</option>
+                            <option value="技能情報">技能情報</option>
+                            <option value="關係情報">關係情報</option>
+                            <option value="核心情報">核心情報</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">取得來源 / 輪數</label>
+                        <input id="mem-source" type="text" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-sm text-slate-200">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">記憶內容</label>
+                    <textarea id="mem-content" rows="3" class="w-full bg-atelier-bg border border-atelier-border rounded-xl p-3 text-sm text-slate-200"></textarea>
+                </div>
+                <label class="flex items-center gap-2 text-xs text-slate-200 cursor-pointer pt-1">
+                    <input id="mem-permanent" type="checkbox" class="accent-amber-500"> 永久記憶（不會自然衰退）
+                </label>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">可保留輪數</label>
+                        <input id="mem-max-loops" type="number" min="1" value="2" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-sm font-mono text-slate-200">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">目前剩餘輪數</label>
+                        <input id="mem-rem-loops" type="number" min="0" value="2" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-sm font-mono text-slate-200">
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-atelier-border">
+                <button id="btn-delete-memory" onclick="deleteEditingMemory()" class="px-3 py-2 rounded-xl bg-rose-500/15 text-rose-400 text-xs mr-auto hidden">刪除</button>
+                <button onclick="closeMemoryModal()" class="px-4 py-2 rounded-xl bg-atelier-card text-xs text-slate-300">取消</button>
+                <button onclick="saveMemoryForm()" class="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs">儲存記憶</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 新增輪迴紀錄 Modal ================= -->
+    <div id="loop-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-atelier-surface border border-atelier-border rounded-2xl w-full max-w-lg p-5 sm:p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-atelier-border pb-3">
+                <h3 class="font-bold text-base text-indigo-300">新增輪迴紀錄</h3>
+                <button onclick="closeLoopModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+            </div>
+            <div class="space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">輪迴編號</label>
+                        <input id="loop-number" type="text" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-sm text-slate-100">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">終結方式</label>
+                        <select id="loop-end-type" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-sm text-slate-200">
+                            <option value="正常輪迴結束">正常輪迴結束</option>
+                            <option value="能力過度使用強制重置">能力過度使用強制重置</option>
+                            <option value="進行中">進行中</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">本輪結局 / 關鍵事件摘要</label>
+                    <textarea id="loop-summary" rows="3" class="w-full bg-atelier-bg border border-atelier-border rounded-xl p-3 text-sm text-slate-200"></textarea>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-atelier-border">
+                <button onclick="closeLoopModal()" class="px-4 py-2 rounded-xl bg-atelier-card text-xs text-slate-300">取消</button>
+                <button onclick="saveLoopForm()" class="px-4 py-2 rounded-xl bg-indigo-500 text-white font-bold text-xs">儲存紀錄</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 新建作品專案 Modal ================= -->
+    <div id="new-project-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-atelier-surface border border-atelier-border rounded-2xl w-full max-w-md p-5 sm:p-6 space-y-4">
+            <h3 class="font-bold text-base text-slate-100">建立新創作專案</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">作品專案名稱</label>
+                    <input id="new-proj-title" type="text" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-slate-100" placeholder="輸入新視覺小說專案名稱...">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">副標題 / 核心標語</label>
+                    <input id="new-proj-subtitle" type="text" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-slate-300" placeholder="選填...">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-atelier-border">
+                <button onclick="closeNewProjectModal()" class="px-4 py-2 rounded-xl bg-atelier-card text-xs text-slate-300">取消</button>
+                <button onclick="confirmCreateProject()" class="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs">建立專案</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast" class="fixed top-14 md:top-5 right-4 z-50 pointer-events-none opacity-0 transition-opacity duration-300 bg-slate-900/95 border border-amber-500/50 text-amber-300 px-4 py-2 rounded-xl text-xs font-medium shadow-xl"></div>
+
+    <script>
+        /**
+         * ============================================================================
+         * 1. 通用可平移／縮放畫布控制器（同時驅動「劇情分支畫布」與「角色關係圖」）
+         * ============================================================================
+         */
+        class InteractivePanZoomCanvas {
+            constructor(viewportId, worldId, zoomLabelId) {
+                this.viewport = document.getElementById(viewportId);
+                this.world = document.getElementById(worldId);
+                this.zoomLabel = document.getElementById(zoomLabelId);
+                this.scale = 1;
+                this.panX = 0;
+                this.panY = 0;
+                this.isPanning = false;
+                this.startX = 0;
+                this.startY = 0;
+                this.pinchStartDist = 0;
+                this.pinchStartScale = 1;
+                this.bindEvents();
+            }
+
+            bindEvents() {
+                if (!this.viewport) return;
+
+                // 空白處拖曳平移（滑鼠與單指觸控皆支援）
+                this.viewport.addEventListener('pointerdown', (e) => {
+                    // 只有點擊背景、世界層或 SVG 空白處時才平移整個畫面
+                    if (e.target.closest('[data-draggable-item="true"]') || e.target.closest('[data-rel-label="true"]')) {
+                        return;
+                    }
+                    this.isPanning = true;
+                    this.startX = e.clientX - this.panX;
+                    this.startY = e.clientY - this.panY;
+                    this.viewport.setPointerCapture(e.pointerId);
+                });
+
+                this.viewport.addEventListener('pointermove', (e) => {
+                    if (!this.isPanning) return;
+                    this.panX = e.clientX - this.startX;
+                    this.panY = e.clientY - this.startY;
+                    this.applyTransform();
+                });
+
+                const endPan = (e) => {
+                    if (this.isPanning) {
+                        this.isPanning = false;
+                        try { this.viewport.releasePointerCapture(e.pointerId); } catch (_) {}
+                    }
+                };
+                this.viewport.addEventListener('pointerup', endPan);
+                this.viewport.addEventListener('pointercancel', endPan);
+
+                // 滑鼠滾輪縮放（以游標為中心）
+                this.viewport.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY < 0 ? 0.1 : -0.1;
+                    const rect = this.viewport.getBoundingClientRect();
+                    const cx = e.clientX - rect.left;
+                    const cy = e.clientY - rect.top;
+                    this.zoomAt(delta, cx, cy);
+                }, { passive: false });
+
+                // 手機雙指捏合縮放
+                this.viewport.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 2) {
+                        this.isPanning = false;
+                        this.pinchStartDist = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        this.pinchStartScale = this.scale;
+                    }
+                }, { passive: true });
+
+                this.viewport.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 2 && this.pinchStartDist > 0) {
+                        e.preventDefault();
+                        const dist = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        const ratio = dist / this.pinchStartDist;
+                        const nextScale = Math.min(1.8, Math.max(0.4, +(this.pinchStartScale * ratio).toFixed(2)));
+                        this.scale = nextScale;
+                        this.applyTransform();
+                    }
+                }, { passive: false });
+            }
+
+            zoomAt(delta, cx, cy) {
+                const prevScale = this.scale;
+                const nextScale = Math.min(1.8, Math.max(0.4, +(prevScale + delta).toFixed(2)));
+                if (nextScale === prevScale) return;
+
+                const worldX = (cx - this.panX) / prevScale;
+                const worldY = (cy - this.panY) / prevScale;
+                this.scale = nextScale;
+                this.panX = cx - worldX * nextScale;
+                this.panY = cy - worldY * nextScale;
+                this.applyTransform();
+            }
+
+            zoomBy(delta) {
+                const rect = this.viewport.getBoundingClientRect();
+                this.zoomAt(delta, rect.width / 2, rect.height / 2);
+            }
+
+            reset() {
+                this.scale = 1;
+                this.panX = 0;
+                this.panY = 0;
+                this.applyTransform();
+            }
+
+            applyTransform() {
+                if (this.world) {
+                    this.world.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.scale})`;
+                }
+                if (this.zoomLabel) {
+                    this.zoomLabel.textContent = `${Math.round(this.scale * 100)}%`;
+                }
+            }
+        }
+
+        /**
+         * ============================================================================
+         * 2. 預設範例資料庫（《Eternal.Nexus.Death. 終結永恆輪迴》作為第一個作品專案）
+         * ============================================================================
+         */
+        const STORAGE_KEY = 'story_atelier_studio_v2';
+
+        function createDefaultSeedData() {
+            const defaultProjectId = 'proj_eternal_nexus_death';
+            return {
+                activeProjectId: defaultProjectId,
+                projects: [
+                    {
+                        id: defaultProjectId,
+                        title: 'Eternal.Nexus.Death. 終結永恆輪迴',
+                        subtitle: '「世界和災厄與我無關，我一定會……找到能拯救你的方法。」',
+                        worldview: '在數百年前，守護世界的女神封印了曾禍害大地的「災厄」於一座塔內（前身為「世界樹」）。\n每一百年，災厄就會甦醒，女神會從十二個國家選擇十二名勇者再次鞏固災厄的封印。每一位勇者都擁有女神賜下的獨一無二祝福。\n\n然而，各懷私心的「勇者」們之間相處並不融洽，也不是每一個人都把對方當作「同伴」。擁有「生命」祝福的少年萊特覺醒了［命運之舟］——承載十二人的命運、擁有十二條命並可替人承擔傷害，卻因此淪為眾人利用與折磨的目標。青梅竹馬「時間」梅莉為了拯救他，踏上了不斷回溯與親手終結他十二條性命的殘酷輪迴。',
+                        nodes: [
+                            {
+                                id: 'node_prologue_orphanage',
+                                title: '序幕回憶：孤兒院的雨夜',
+                                type: '一般劇情',
+                                scene: '邊境孤兒院・舊木屋',
+                                condition: '初始劇情',
+                                memoryReqId: '',
+                                summary: '逃難時被遺棄的萊特被送到孤兒院當晚，與亡國後裔梅莉相遇並立下成為英雄的約定。',
+                                content: '萊特並不是天生孤兒，而是在逃難時被遺棄的。被送到孤兒院的當晚，第一個發現縮在角落發抖的他的人，正是梅莉。\n\n一開始萊特難以接受自己被遺棄的事實，陷入深深的惶恐。因為不想做孤兒院裡被強迫分派的雜事，他遭到其他孩子針對，甚至被一群人誣陷而受到懲罰。\n\n「什麼？妳夢到我死了？哈哈，我可是將來要成為英雄的男人！」\n「相信我，我不會讓妳為我掉眼淚——」\n\n萊特之所以如此嚮往成為故事裡的英雄，是因為英雄總是受人信任、被大家喜歡，不會再有人拋棄他，也沒有人會討厭他。',
+                                characters: ['char_meli', 'char_light'],
+                                nextNodes: ['node_prev_loop_lab'],
+                                notes: '營造兩人早期溫馨但帶著脆弱感的羈絆，與終章形成對比。',
+                                x: 60,
+                                y: 120
+                            },
+                            {
+                                id: 'node_prev_loop_lab',
+                                title: '前輪迴悲劇：命運之舟的實驗',
+                                type: '特殊事件',
+                                scene: '地下實驗室 / 討伐前線',
+                                condition: '輪迴次數 >= 2',
+                                memoryReqId: 'mem_saen_exp',
+                                summary: '在過去的輪迴中，萊特因［命運之舟］屢遭隊友消耗：被菈比訓練打死、被薩恩殺死十二次進行死者使役實驗。',
+                                content: '「生命」萊特的［命運之舟］擁有十二條命，可以在戰鬥中及時替人承擔傷害。本應是對團隊最有利的能力，卻引來了惡意。\n\n「力量」戰士菈比曾拉著萊特陪她練習，卻在［嗜血狂化］下失手將他打死；「療癒」修女芙緹亞因為嚴重怕血，在關鍵時刻畏縮耽誤救治，眼睜睜看著萊特斷氣。\n\n最殘酷的是「支配」死靈法師薩恩——他對萊特的能力極感興趣，為了實驗他死後究竟還能不能發動［超生長］，竟冷酷地親手殺死他整整十二次，並試圖對他施展［死者使役］。',
+                                characters: ['char_light', 'char_saen', 'char_rabi', 'char_futia'],
+                                nextNodes: ['node_final_ch1'],
+                                notes: '此段記憶成為梅莉在「終章：第一章」決定親自下手消耗萊特十二條命的直接導火線。',
+                                x: 390,
+                                y: 120
+                            },
+                            {
+                                id: 'node_final_ch1',
+                                title: '終章：第一章（月夜的十二刀）',
+                                type: '輪迴節點',
+                                scene: '夜晚的樹林・營火不遠處',
+                                condition: '持有記憶：薩恩的死者使役實驗',
+                                memoryReqId: 'mem_saen_exp',
+                                summary: '為了不讓萊特再被其他人折磨與利用，梅莉流著淚親自將匕首刺入萊特胸口，從七數到十二。',
+                                content: '七……\n\n夜晚的樹林裡，抬頭便可以看到不遠處搖曳的營火與炊煙。\n少女正在默默數著什麼。\n\n「『時間』，停下！妳在幹什麼啊！？」\n\n遠處傳來枝葉顫動的細碎聲響，還有氣急敗壞的叫喊聲，少女沒有理他，只是再舉起手中的匕首。\n\n鮮血與淚滴濺在沒有反抗能力的少年胸口上。\n\n八……\n\n「……為什麼？為什麼？」\n\n藉著星空和穿越林葉的月光照明，如藍天般清澈的眼睛再如前七次一樣張開，不解地看著她。\n\n不要問……不要問……我不想聽……\n\n撲哧！\n\n刀刃再次沒入少年的心口，地上的血泊已經染紅了少女的雙辮。\n\n一定很痛吧……\n\n「喂！你們去壓住她！突然發什麼瘋……別讓她再繼續殺掉『生命』了！」\n\n「奇怪……他們兩個人不是青梅竹馬嗎？什麼時候關係變得這麼差了。」\n\n「支配」著急喊來其他人，依稀間還能聽見「奇詭」漠不關心的話語好像從很遠的地方傳來。\n\n九……\n\n「……梅莉，為什麼？要……殺……我……我們不是約好了……」\n少年死了，又活過來了，又一次開口，又一次以那副單純又困惑的表情望向她。\n\n「別再說了……我……」\n少女難受地別過頭去。\n\n「命運之舟」還剩下三條命……不能就這麼……再繼續讓人折磨他了……\n\n「『時間』！」\n\n一隻手粗暴地抓住了她拿刀的右臂。\n\n「這傢伙……『生命』是我們重要的『同伴』，妳發什麼神經？是想讓我們在還沒見到災厄之前就通通送死去嗎！？」\n\n開口的是那個來自騎士家族的大少爺，「守護」。\n\n「住手！妳這是在破壞整個小隊的——喂！」\n\n時間似乎在一瞬間加快、流逝，轉眼間，少女竟脫離了力氣顯然比她大上好幾倍的少年的掌控，不顧一切地再將匕首刺進倒在地上的少年「生命」的心口。\n\n十……\n\n萊特……對不起……對不起……對不起……\n\n眼淚止不住地往下掉，她的手顫抖著，再舉起。\n\n少女並不是自願殺他的，她清楚。這次又失敗了，已經不知道是第幾回了，只要再兩次……只要再兩次……\n\n「梅莉……妳到底怎麼了？別哭啊。有什麼苦衷可以說出來，我可以幫妳的，就像以前一樣——」\n\n「別再說了！求求你，別再說了……」\n\n十一。\n\n「妳……妳……！」\n「退後！」\n\n梅莉手中的匕首抵在少年萊特的脖頸上。\n\n「再動一下我就把他——」\n\n「嘖！」\n\n「守護」想再向前的步伐停在原地，「支配」原先抬起手要示意身後的「空間」發動攻擊，此時也收住在指尖凝聚的魔力。\n\n「妳到底想怎樣？」\n\n「……」\n她看著周遭的眾人——\n\n手按在劍柄上的「守護」、眼底陰狠的「支配」、面無表情的「空間」——他們是，不，他們「曾是」一個小隊的成員。\n\n［命運之舟］——這是萊特擁有「生命」祝福所得到的能力。\n靈魂承載勇者們的命運——因此擁有十二條命，可以在戰鬥中及時替人承擔。本應是對團隊非常有利的能力……\n\n「為了一己私慾，破壞整個小隊的和諧，把我們的『盾』一次次殺死，『時間』啊，妳背叛了我們——」\n\n「如果是妳想要的話，讓我自己來就好了。」\n\n「——如果這樣就可以讓妳不再難過的話。」\n\n十二。\n\n第十二刀，第十二次死亡，終於……結束了。\n\n「妳滿意了嗎？」\n\n皮膚蒼白的黑髮少年冷聲道',
+                                characters: ['char_meli', 'char_light', 'char_saen', 'char_gladius', 'char_enigma', 'char_space'],
+                                nextNodes: [],
+                                notes: '待接續：第十二次死亡後的劇情發展。',
+                                x: 720,
+                                y: 120
+                            }
+                        ],
+                        characters: [
+                            { id: 'char_meli', name: '梅莉', title: '時間', faction: '主角方', origin: '已被災厄吞噬的亡國後裔', appearance: '藍紫色長髮、深藍色眼睛、雙長辮', personality: '外冷內熱、背負沉重輪迴記憶、為拯救青梅竹馬不惜背負一切惡名', abilities: '［倍速］0.5倍速、兩倍速（倍速期間不能干涉當下時空的其他人）\n［讀檔］讀檔要在標的物留下印記，標的物被破壞讀檔就失敗', quotes: '「真拿你沒辦法⋯⋯」\n「世界和災厄與我無關，我一定會……找到能拯救你的方法。」', backstory: '殺手/盜賊，與萊特同一座孤兒院出身的青梅竹馬。萊特被送到孤兒院當晚第一個發現他的人。', avatar: '', gx: 140, gy: 160 },
+                            { id: 'char_light', name: '萊特', title: '生命', faction: '主角方', origin: '「世界樹」的國度（災厄之塔前身）', appearance: '淺棕髮、藍瞳、長馬尾', personality: '戰鬥能力普通、個性好欺負、渴望被信任與喜愛、嚮往成為帥氣的英雄', abilities: '［命運之舟］承載12人的命運，擁有12條命，可在戰鬥中及時替人承擔\n［超生長］讓生物超越自身極限生長', quotes: '「什麼？妳夢到我死了？哈哈，我可是將來要成為英雄的男人！」\n「相信我，我不會讓妳為我掉眼淚——」', backstory: '逃難時被遺棄而進入孤兒院，因不想做雜事曾被針對與誣陷，因此嚮往成為受大家喜歡的英雄。', avatar: '', gx: 420, gy: 160 },
+                            { id: 'char_saen', name: '薩恩', title: '支配', faction: '敵對方', origin: '地下（人類和亡靈共存的奇怪國家）', appearance: '黑髮、很不健康的白色肌膚、暗紅瞳', personality: '說話冷淡、語氣強硬、討厭地上的人與自身出身，藉勇者之名向世界復仇', abilities: '［牽線木偶］透過消耗精神力操控人或生物，效果隨熟練度上升\n［死者使役］操控屍體作為肉盾或使其自爆', quotes: '「大不了我就把你們通通變成人偶，由我一個人討伐災厄就好了。」', backstory: '流落街頭的孤兒，聽聞覺醒可翻身而成為勇者。一登場便支配了「引航」，曾為實驗［超生長］殺死萊特十二次。', avatar: '', gx: 420, gy: 420 },
+                            { id: 'char_rabi', name: '菈比', title: '力量', faction: '敵對方', origin: '獸人的國家', appearance: '兔耳少女', personality: '戰鬥狂，不太具有同理心', abilities: '［嗜血狂化］會失去痛覺，傷越重攻擊越強', quotes: '「可以嗎？可以陪我練習嗎？太好了！」', backstory: '曾經讓萊特陪著她一起訓練，結果不小心打死他。', avatar: '', gx: 700, gy: 160 },
+                            { id: 'char_futia', name: '芙緹亞', title: '療癒', faction: '敵對方', origin: '聖職者的國度', appearance: '白毛修女', personality: '膽怯、沒主見、怕血（怕自己成為下一個受害者而不敢阻止眾人）', abilities: '［女神的祝語］減輕傷痛或產生減輕傷痛的錯覺\n［復甦］治癒能力', quotes: '「不要……拜託你們別受傷……」', backstory: '曾經因為怕血耽誤救治時機讓萊特死掉。', avatar: '', gx: 700, gy: 420 },
+                            { id: 'char_gladius', name: '格拉迪烏', title: '守護', faction: '敵對方', origin: '騎士家族', appearance: '金髮藍瞳、戴耳環', personality: '騎士家族少爺，注重效率和目標，一絲不苟，潔癖', abilities: '［心之城牆］消耗自己的靈魂（消耗越多會喪失人性），抵擋任何攻擊', quotes: '「……為什麼我非得跟你們這些亂七八糟的傢伙一起行動啊。」', backstory: '注重團隊任務效率的騎士少爺。', avatar: '', gx: 140, gy: 420 },
+                            { id: 'char_enigma', name: '', title: '奇詭', faction: '敵對方', origin: '黃金的國度', appearance: '大少爺裝束（尚未取名）', personality: '心高氣傲、學院考試成績極好但極不情願成為勇者、討厭麻煩、愛使喚人', abilities: '［幻造奇景］幻化出自己想像的一樣東西，或是幻化成某個人', quotes: '「知道嗎？我根本懶得當什麼勇者。麻煩死了。」', backstory: '來自黃金國度的軍師。', avatar: '', gx: 140, gy: 650 },
+                            { id: 'char_space', name: '', title: '空間', faction: '敵對方', origin: '實力至上魔法都市', appearance: '黑長直、黑瞳（尚未取名）', personality: '天才少女，覺得自己怎麼做都不夠', abilities: '［無限切割］撕裂空間，無限切割\n［裂界索］短距離瞬移', quotes: '「只要我變強，就能被愛了吧……。」', backstory: '來自實力至上魔法都市的天才魔法師。', avatar: '', gx: 420, gy: 650 },
+                            { id: 'char_paper', name: '紙', title: '召喚', faction: '敵對方', origin: '東方的群島', appearance: '粉毛、有側辮、全員中最矮的少女', personality: '無口、只是想找人陪玩、喜歡畫畫、疑似有童年創傷', abilities: '［想像繪製］繪製少女想像中的生物，召喚式神', quotes: '「……紙，不喜歡你。」', backstory: '來自東方群島的召喚士。', avatar: '', gx: 700, gy: 650 },
+                            { id: 'char_guide', name: '', title: '引航', faction: '敵對方', origin: '濱海的國度', appearance: '爽朗卻眼神空洞（尚未取名）', personality: '理想主義 -> 被支配後成為梅莉口中的「偽君子」', abilities: '［啟明星］大範圍消滅魔物，並把當下攻擊目標轉移到自己身上', quotes: '「呵呵……我們是一個團隊，對吧？」', backstory: '一開始就被「支配」薩恩控制了。', avatar: '', gx: 960, gy: 420 },
+                            { id: 'char_onifi', name: '奧妮菲', title: '安眠', faction: '中立方', origin: '精靈鄉', appearance: '紫毛、無時無刻都在睡覺的少女', personality: '很隨緣，不管在哪都能睡', abilities: '［窺夢］窺視別人的視角，被支配的無法窺視', quotes: '「呼……又睡著了……」', backstory: '精靈鄉的預言者 / 占卜師。', avatar: '', gx: 960, gy: 160 },
+                            { id: 'char_gnosis', name: '諾西斯', title: '智慧', faction: '中立方', origin: '帝國', appearance: '孤僻少年', personality: '不近人情、孤僻，喜歡自己鑽研有興趣的東西，被其他人說是「難以合作」', abilities: '（待補完）', quotes: '「別來打擾我的研究。」', backstory: '來自帝國的孤僻賢者。', avatar: '', gx: 960, gy: 650 }
+                        ],
+                        relationships: [
+                            {
+                                id: 'rel_1',
+                                from: 'char_meli',
+                                to: 'char_light',
+                                label: '青梅竹馬 / 誓言拯救',
+                                direction: 'bidirectional',
+                                color: '#f59e0b',
+                                style: 'solid',
+                                note: '孤兒院相依為命的青梅竹馬；梅莉為了拯救他不惜在終章親手終結他十二條性命。'
+                            },
+                            {
+                                id: 'rel_2',
+                                from: 'char_saen',
+                                to: 'char_guide',
+                                label: '精神支配傀儡',
+                                direction: 'directed',
+                                color: '#a855f7',
+                                style: 'solid',
+                                note: '「引航」一登場便遭到薩恩的能力控制，表面維持團隊和諧的偽君子姿態。'
+                            },
+                            {
+                                id: 'rel_3',
+                                from: 'char_saen',
+                                to: 'char_light',
+                                label: '12次死亡實驗與利用',
+                                direction: 'directed',
+                                color: '#f43f5e',
+                                style: 'dashed',
+                                note: '薩恩為驗證［超生長］與［死者使役］，曾殘忍殺死萊特十二次。'
+                            },
+                            {
+                                id: 'rel_4',
+                                from: 'char_rabi',
+                                to: 'char_light',
+                                label: '陪練沙包（失手打死）',
+                                direction: 'directed',
+                                color: '#fb7185',
+                                style: 'dotted',
+                                note: '缺乏同理心的戰鬥狂，曾拉萊特陪練並失手將他打死。'
+                            }
+                        ],
+                        memories: [
+                            {
+                                id: 'mem_saen_exp',
+                                title: '薩恩的死者使役實驗',
+                                category: '事件情報',
+                                source: '第4輪迴・地下室',
+                                content: '薩恩為了驗證萊特死後能否發動［超生長］，親手殺死他十二次並施展［死者使役］將其當作人偶。',
+                                isPermanent: false,
+                                maxLoops: 2,
+                                remainingLoops: 1
+                            },
+                            {
+                                id: 'mem_world_tree',
+                                title: '世界樹即災厄之塔',
+                                category: '核心情報',
+                                source: '第2輪迴・帝國古文獻',
+                                content: '萊特的故鄉「世界樹」其實就是災厄之塔的前身；一旦災厄完全復活，世界樹便會轉化為災厄之塔。',
+                                isPermanent: true,
+                                maxLoops: 99,
+                                remainingLoops: 99
+                            }
+                        ],
+                        loops: [
+                            {
+                                id: 'loop_1',
+                                number: '第 1 輪迴',
+                                endType: '正常輪迴結束',
+                                summary: '勇者小隊互不信任，萊特替隊友承傷耗盡十二條命而死，梅莉首次覺醒［讀檔］回溯。'
+                            },
+                            {
+                                id: 'loop_4',
+                                number: '第 4 輪迴',
+                                endType: '能力過度使用強制重置',
+                                summary: '梅莉目睹薩恩對萊特進行十二次死亡實驗後連續強行讀檔，觸發使用上限強制重置回起始日。'
+                            }
+                        ],
+                        anchor: {
+                            target: '梅莉隨身攜帶的舊懷錶（刻有時間印記）',
+                            timestamp: '終章：第一章 前夕（黃昏營地）',
+                            isValid: true,
+                            usedCount: 2,
+                            maxLimit: 3,
+                            logs: [
+                                '[系統] 初始印記已刻錄於「梅莉隨身攜帶的舊懷錶」',
+                                '[警告] 本輪已使用讀檔 2 次，距離強制重置上限僅剩 1 次'
+                            ]
+                        }
+                    }
+                ]
+            };
+        }
+
+        /**
+         * ============================================================================
+         * 3. 全域狀態與輔助函式（含未命名角色稱號自動顯示）
+         * ============================================================================
+         */
+        let appState = loadStateFromStorage();
+        let currentTab = 'overview';
+        let plotViewMode = 'list';
+        let charViewMode = 'list';
+        let activeMechSubTab = 'memories';
+        let editingNodeId = null;
+        let editingCharId = null;
+        let editingMemoryId = null;
+        let editingRelationId = null;
+
+        // 畫布連線模式狀態
+        let canvasConnectMode = false;
+        let connectSourceNodeId = null;
+
+        let plotCanvasCtrl = null;
+        let relCanvasCtrl = null;
+
+        function loadStateFromStorage() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && Array.isArray(parsed.projects) && parsed.projects.length > 0) {
+                        parsed.projects.forEach(p => {
+                            if (!Array.isArray(p.relationships)) p.relationships = [];
+                        });
+                        return parsed;
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            const seed = createDefaultSeedData();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
+            return seed;
+        }
+
+        function saveStateToStorage(showIndicator = true) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+                if (showIndicator) {
+                    const dStatus = document.getElementById('desktop-save-status');
+                    const mStatus = document.getElementById('mobile-save-status');
+                    const now = new Date();
+                    const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+                    if (dStatus) dStatus.textContent = `已自動儲存 (${timeStr})`;
+                    if (mStatus) mStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>已儲存`;
+                }
+            } catch (e) {
+                showToast('儲存空間已滿，請立即匯出 JSON 備份！');
+            }
+        }
+
+        function getActiveProject() {
+            return appState.projects.find(p => p.id === appState.activeProjectId) || appState.projects[0];
+        }
+
+        // 取得角色顯示名稱：若尚未取名，自動顯示「『稱號』」
+        function getCharacterDisplayName(charObj) {
+            if (!charObj) return '未知角色';
+            const cleanName = (charObj.name || '').trim();
+            const cleanTitle = (charObj.title || '').trim();
+            if (cleanName) return cleanName;
+            if (cleanTitle) return `『${cleanTitle}』`;
+            return '未命名角色';
+        }
+
+        function getCharacterInitial(charObj) {
+            if (!charObj) return '?';
+            const cleanName = (charObj.name || '').trim();
+            const cleanTitle = (charObj.title || '').trim();
+            if (cleanName) return cleanName.slice(0, 1);
+            if (cleanTitle) return cleanTitle.slice(0, 1);
+            return '?';
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 2200);
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        /**
+         * ============================================================================
+         * 4. 導覽與專案切換
+         * ============================================================================
+         */
+        function switchTab(tabName) {
+            currentTab = tabName;
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById(`view-${tabName}`);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                const isActive = btn.getAttribute('data-nav') === tabName;
+                if (btn.closest('aside')) {
+                    btn.className = isActive
+                        ? 'nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                        : 'nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-100 hover:bg-atelier-card transition-all';
+                } else {
+                    btn.className = isActive
+                        ? 'nav-btn flex-1 flex flex-col items-center py-1.5 rounded-xl text-[11px] font-bold text-amber-400'
+                        : 'nav-btn flex-1 flex flex-col items-center py-1.5 rounded-xl text-[11px] font-medium text-slate-400';
+                }
+            });
+
+            refreshAllViews();
+        }
+
+        function renderProjectSelectors() {
+            const dSel = document.getElementById('desktop-project-select');
+            const mSel = document.getElementById('mobile-project-select');
+            const optionsHTML = appState.projects.map(p =>
+                `<option value="${p.id}" ${p.id === appState.activeProjectId ? 'selected' : ''}>${escapeHTML(p.title)}</option>`
+            ).join('');
+            dSel.innerHTML = optionsHTML;
+            mSel.innerHTML = optionsHTML;
+        }
+
+        function switchProject(projectId) {
+            appState.activeProjectId = projectId;
+            saveStateToStorage();
+            refreshAllViews();
+            showToast(`已切換專案：${getActiveProject().title}`);
+        }
+
+        function refreshAllViews() {
+            renderProjectSelectors();
+            renderOverview();
+            populateCharFilterDropdown();
+            refreshPlotViews();
+            refreshCharacterViews();
+            renderMechanicsViews();
+            renderProjectManagerList();
+        }
+
+        /**
+         * ============================================================================
+         * 5. 總覽分頁 (Overview)
+         * ============================================================================
+         */
+        function renderOverview() {
+            const proj = getActiveProject();
+            document.getElementById('overview-title-input').value = proj.title || '';
+            document.getElementById('overview-subtitle-input').value = proj.subtitle || '';
+            document.getElementById('overview-worldview-input').value = proj.worldview || '';
+
+            const totalWords = proj.nodes.reduce((sum, n) => sum + (n.content ? n.content.length : 0), 0);
+            document.getElementById('stat-nodes').textContent = proj.nodes.length;
+            document.getElementById('stat-words').textContent = totalWords.toLocaleString();
+            document.getElementById('stat-chars').textContent = `${proj.characters.length} / ${(proj.relationships || []).length}`;
+            document.getElementById('stat-mechanics').textContent = `${proj.memories.length} / ${proj.loops.length}`;
+        }
+
+        function updateProjectMeta(field, value) {
+            const proj = getActiveProject();
+            proj[field] = value;
+            saveStateToStorage();
+            if (field === 'title') renderProjectSelectors();
+        }
+
+        /**
+         * ============================================================================
+         * 6. 劇情列表 & 可平移縮放分支畫布 (Plot List & Branching Canvas)
+         * ============================================================================
+         */
+        function setPlotViewMode(mode) {
+            plotViewMode = mode;
+            const listBtn = document.getElementById('btn-plot-list-mode');
+            const canvasBtn = document.getElementById('btn-plot-canvas-mode');
+            const connectBtn = document.getElementById('btn-canvas-connect-mode');
+            const listContainer = document.getElementById('plot-list-container');
+            const canvasContainer = document.getElementById('plot-canvas-container');
+
+            if (mode === 'list') {
+                listBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-amber-500 text-slate-950 transition';
+                canvasBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition';
+                connectBtn.classList.add('hidden');
+                listContainer.classList.remove('hidden');
+                canvasContainer.classList.add('hidden');
+                renderPlotList();
+            } else {
+                canvasBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-amber-500 text-slate-950 transition';
+                listBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition';
+                connectBtn.classList.remove('hidden');
+                listContainer.classList.add('hidden');
+                canvasContainer.classList.remove('hidden');
+                renderPlotCanvas();
+            }
+        }
+
+        function refreshPlotViews() {
+            if (plotViewMode === 'list') renderPlotList();
+            else renderPlotCanvas();
+        }
+
+        function toggleCanvasConnectMode() {
+            canvasConnectMode = !canvasConnectMode;
+            connectSourceNodeId = null;
+            const btn = document.getElementById('btn-canvas-connect-mode');
+            const hint = document.getElementById('plot-canvas-hint');
+            if (canvasConnectMode) {
+                btn.textContent = '🔗 連線模式：開（點選起點）';
+                btn.className = 'px-3 py-2 rounded-xl bg-amber-500/20 border border-amber-500 text-xs font-bold text-amber-300 transition';
+                hint.textContent = '連線模式啟動：請先點擊「起點節點」，再點擊「目標節點」建立分支連線';
+            } else {
+                btn.textContent = '🔗 連線模式：關';
+                btn.className = 'px-3 py-2 rounded-xl bg-atelier-surface hover:bg-atelier-card border border-atelier-border text-xs font-medium text-slate-200 transition';
+                hint.textContent = '空白處拖曳平移畫面 ・ 滾輪/雙指縮放 ・ 拖曳卡片移動節點';
+            }
+            renderPlotCanvas();
+        }
+
+        function handleCanvasNodeClickForConnect(nodeId) {
+            if (!canvasConnectMode) return;
+            const proj = getActiveProject();
+            if (!connectSourceNodeId) {
+                connectSourceNodeId = nodeId;
+                document.getElementById('btn-canvas-connect-mode').textContent = '🔗 請點選目標節點...';
+                renderPlotCanvas();
+                return;
+            }
+            if (connectSourceNodeId === nodeId) {
+                connectSourceNodeId = null;
+                document.getElementById('btn-canvas-connect-mode').textContent = '🔗 連線模式：開（點選起點）';
+                renderPlotCanvas();
+                return;
+            }
+            const srcNode = proj.nodes.find(n => n.id === connectSourceNodeId);
+            if (srcNode) {
+                if (!srcNode.nextNodes) srcNode.nextNodes = [];
+                if (!srcNode.nextNodes.includes(nodeId)) {
+                    srcNode.nextNodes.push(nodeId);
+                    showToast('已建立分支連線！');
+                } else {
+                    srcNode.nextNodes = srcNode.nextNodes.filter(id => id !== nodeId);
+                    showToast('已解除該分支連線');
+                }
+                saveStateToStorage();
+            }
+            connectSourceNodeId = null;
+            document.getElementById('btn-canvas-connect-mode').textContent = '🔗 連線模式：開（點選起點）';
+            renderPlotCanvas();
+        }
+
+        function populateCharFilterDropdown() {
+            const proj = getActiveProject();
+            const sel = document.getElementById('plot-char-filter');
+            const currentVal = sel.value;
+            sel.innerHTML = `<option value="ALL">所有出場角色</option>` +
+                proj.characters.map(c => `<option value="${c.id}">${escapeHTML(getCharacterDisplayName(c))}</option>`).join('');
+            if ([...sel.options].some(o => o.value === currentVal)) {
+                sel.value = currentVal;
+            }
+        }
+
+        function getNodeTypeBadgeStyle(type) {
+            const map = {
+                '一般劇情': 'bg-slate-700/60 text-slate-200 border-slate-600',
+                '選項分支': 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+                '分支匯合': 'bg-teal-500/20 text-teal-300 border-teal-500/40',
+                '特殊事件': 'bg-purple-500/20 text-purple-300 border-purple-500/40',
+                '條件判斷': 'bg-blue-500/20 text-blue-300 border-blue-500/40',
+                '輪迴節點': 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+                '結局': 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+            };
+            return map[type] || map['一般劇情'];
+        }
+
+        function getFilteredNodes() {
+            const proj = getActiveProject();
+            const kw = (document.getElementById('plot-search-input')?.value || '').trim().toLowerCase();
+            const typeFilter = document.getElementById('plot-type-filter')?.value || 'ALL';
+            const charFilter = document.getElementById('plot-char-filter')?.value || 'ALL';
+
+            return proj.nodes.filter(n => {
+                if (typeFilter !== 'ALL' && n.type !== typeFilter) return false;
+                if (charFilter !== 'ALL' && !(n.characters || []).includes(charFilter)) return false;
+                if (kw) {
+                    const hay = `${n.title} ${n.scene} ${n.summary} ${n.content}`.toLowerCase();
+                    if (!hay.includes(kw)) return false;
+                }
+                return true;
+            });
+        }
+
+        function renderPlotList() {
+            const proj = getActiveProject();
+            const container = document.getElementById('plot-list-container');
+            const filtered = getFilteredNodes();
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 bg-atelier-surface border border-atelier-border rounded-2xl">
+                        <p class="text-sm text-slate-400">找不到符合條件的劇情節點</p>
+                        <button onclick="createNewPlotNode()" class="mt-3 px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs">+ 新增劇情節點</button>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(node => {
+                const charBadges = (node.characters || []).map(cid => {
+                    const c = proj.characters.find(x => x.id === cid);
+                    return c ? `<span class="px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/25 text-[11px]">${escapeHTML(getCharacterDisplayName(c))}</span>` : '';
+                }).join('');
+
+                const nextNames = (node.nextNodes || []).map(nid => {
+                    const target = proj.nodes.find(x => x.id === nid);
+                    return target ? escapeHTML(target.title) : '';
+                }).filter(Boolean).join('、');
+
+                const wordCount = node.content ? node.content.length : 0;
+
+                return `
+                <div onclick="openPlotEditor('${node.id}')" class="cursor-pointer bg-atelier-surface hover:bg-atelier-card border border-atelier-border hover:border-amber-500/50 rounded-2xl p-4 sm:p-5 transition group">
+                    <div class="flex flex-wrap items-start justify-between gap-2 mb-2">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getNodeTypeBadgeStyle(node.type)}">${escapeHTML(node.type)}</span>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-100 group-hover:text-amber-300 transition">${escapeHTML(node.title || '未命名節點')}</h3>
+                        </div>
+                        <span class="text-xs font-mono text-slate-400">${wordCount} 字</span>
+                    </div>
+                    ${node.scene ? `<div class="text-xs text-slate-400 mb-1.5">📍 場景：${escapeHTML(node.scene)}</div>` : ''}
+                    <p class="text-xs sm:text-sm text-slate-300/90 line-clamp-2 leading-relaxed mb-3">${escapeHTML(node.summary || node.content.slice(0, 100) || '（尚未撰寫內容）')}</p>
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-atelier-border/70">
+                        <div class="flex flex-wrap gap-1.5">${charBadges || '<span class="text-[11px] text-slate-500">無指定出場角色</span>'}</div>
+                        ${nextNames ? `<div class="text-[11px] text-amber-400/90">後續 → ${nextNames}</div>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderPlotCanvas() {
+            const proj = getActiveProject();
+            const nodesLayer = document.getElementById('plot-canvas-nodes');
+            const filteredIds = new Set(getFilteredNodes().map(n => n.id));
+
+            nodesLayer.innerHTML = proj.nodes.map((node, idx) => {
+                const x = typeof node.x === 'number' ? node.x : (80 + (idx % 4) * 320);
+                const y = typeof node.y === 'number' ? node.y : (110 + Math.floor(idx / 4) * 200);
+                node.x = x;
+                node.y = y;
+                const dimmed = !filteredIds.has(node.id) ? 'opacity-25' : '';
+                const isConnectSource = connectSourceNodeId === node.id;
+
+                return `
+                <div id="pnode-${node.id}" data-draggable-item="true"
+                     onpointerdown="startPlotNodeDrag(event, '${node.id}')"
+                     onclick="handleCanvasNodeClickForConnect('${node.id}')"
+                     ondblclick="openPlotEditor('${node.id}')"
+                     style="transform: translate(${x}px, ${y}px); width: 255px;"
+                     class="absolute top-0 left-0 bg-atelier-surface/95 border ${isConnectSource ? 'border-amber-400 ring-2 ring-amber-400/50' : 'border-atelier-border hover:border-amber-500'} rounded-xl p-3.5 shadow-xl cursor-move transition-colors ${dimmed}">
+                    <div class="flex items-center justify-between gap-1 mb-1.5">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${getNodeTypeBadgeStyle(node.type)}">${escapeHTML(node.type)}</span>
+                        <button onpointerdown="event.stopPropagation()" onclick="event.stopPropagation(); openPlotEditor('${node.id}')" class="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 text-[11px] font-bold transition">
+                            編輯劇本
+                        </button>
+                    </div>
+                    <div class="font-bold text-sm text-slate-100 truncate mb-1">${escapeHTML(node.title || '未命名')}</div>
+                    <div class="text-[11px] text-slate-400 line-clamp-2 leading-snug">${escapeHTML(node.summary || '雙擊或點「編輯劇本」撰寫正文...')}</div>
+                </div>`;
+            }).join('');
+
+            drawPlotCanvasEdges();
+        }
+
+        function drawPlotCanvasEdges() {
+            const proj = getActiveProject();
+            const svgLayer = document.getElementById('plot-canvas-edges');
+            let paths = `
+                <defs>
+                    <marker id="plot-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                        <polygon points="0 0, 8 3, 0 6" fill="#f59e0b" />
+                    </marker>
+                </defs>`;
+
+            proj.nodes.forEach(src => {
+                (src.nextNodes || []).forEach(targetId => {
+                    const dst = proj.nodes.find(n => n.id === targetId);
+                    if (!dst) return;
+                    const x1 = (src.x || 0) + 255;
+                    const y1 = (src.y || 0) + 48;
+                    const x2 = (dst.x || 0);
+                    const y2 = (dst.y || 0) + 48;
+                    const dx = Math.max(60, Math.abs(x2 - x1) * 0.45);
+                    paths += `<path d="M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}" stroke="#f59e0b" stroke-width="2.2" stroke-opacity="0.75" fill="none" marker-end="url(#plot-arrow)" />`;
+                });
+            });
+            svgLayer.innerHTML = paths;
+        }
+
+        let draggingPlotNode = null;
+        let plotDragOffset = { x: 0, y: 0 };
+
+        function startPlotNodeDrag(e, nodeId) {
+            if (canvasConnectMode) return;
+            e.stopPropagation();
+            const proj = getActiveProject();
+            const node = proj.nodes.find(n => n.id === nodeId);
+            if (!node) return;
+            draggingPlotNode = node;
+            const scale = plotCanvasCtrl ? plotCanvasCtrl.scale : 1;
+            plotDragOffset.x = e.clientX / scale - (node.x || 0);
+            plotDragOffset.y = e.clientY / scale - (node.y || 0);
+        }
+
+        /**
+         * ============================================================================
+         * 7. 角色資料庫、頭像上傳壓縮與「完全自定義角色關係圖」
+         * ============================================================================
+         */
+        function setCharViewMode(mode) {
+            charViewMode = mode;
+            const listBtn = document.getElementById('btn-char-list-mode');
+            const graphBtn = document.getElementById('btn-char-graph-mode');
+            const addRelBtn = document.getElementById('btn-add-relation');
+            const listSub = document.getElementById('char-list-subview');
+            const graphSub = document.getElementById('char-graph-subview');
+
+            if (mode === 'list') {
+                listBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-indigo-500 text-white transition';
+                graphBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition';
+                addRelBtn.classList.add('hidden');
+                listSub.classList.remove('hidden');
+                graphSub.classList.add('hidden');
+                renderCharacterList();
+            } else {
+                graphBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-indigo-500 text-white transition';
+                listBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition';
+                addRelBtn.classList.remove('hidden');
+                listSub.classList.add('hidden');
+                graphSub.classList.remove('hidden');
+                renderRelationshipGraph();
+            }
+        }
+
+        function refreshCharacterViews() {
+            if (charViewMode === 'list') renderCharacterList();
+            else renderRelationshipGraph();
+        }
+
+        function renderCharacterList() {
+            const proj = getActiveProject();
+            const grid = document.getElementById('character-grid');
+            const kw = (document.getElementById('char-search-input')?.value || '').trim().toLowerCase();
+            const faction = document.getElementById('char-faction-filter')?.value || 'ALL';
+
+            const filtered = proj.characters.filter(c => {
+                if (faction !== 'ALL' && c.faction !== faction) return false;
+                if (kw) {
+                    const hay = `${c.name} ${c.title} ${c.origin} ${c.abilities} ${c.personality}`.toLowerCase();
+                    if (!hay.includes(kw)) return false;
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-10 bg-atelier-surface border border-atelier-border rounded-2xl text-sm text-slate-400">尚無符合條件的角色資料</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(c => {
+                const appearances = proj.nodes.filter(n => (n.characters || []).includes(c.id));
+                const displayName = getCharacterDisplayName(c);
+                const isUnnamed = !(c.name || '').trim();
+                const factionColor = c.faction === '主角方'
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                    : (c.faction === '敵對方' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' : 'bg-slate-700/60 text-slate-300 border-slate-600');
+
+                const avatarHTML = c.avatar
+                    ? `<img src="${c.avatar}" alt="${escapeHTML(displayName)}" class="w-12 h-12 rounded-full object-cover border border-indigo-400/50 flex-shrink-0">`
+                    : `<div class="w-12 h-12 rounded-full bg-atelier-card border border-indigo-500/40 flex items-center justify-center text-base font-bold text-indigo-300 flex-shrink-0">${escapeHTML(getCharacterInitial(c))}</div>`;
+
+                return `
+                <div onclick="openCharEditor('${c.id}')" class="cursor-pointer bg-atelier-surface hover:bg-atelier-card border border-atelier-border hover:border-indigo-500/50 rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition group">
+                    <div>
+                        <div class="flex items-start justify-between gap-2 mb-3">
+                            <div class="flex items-center gap-3 min-w-0">
+                                ${avatarHTML}
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-1.5">
+                                        <h3 class="text-base font-bold text-slate-100 group-hover:text-indigo-300 truncate transition">${escapeHTML(displayName)}</h3>
+                                        ${isUnnamed ? '<span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px]">未取名</span>' : ''}
+                                    </div>
+                                    <div class="text-xs text-amber-300/90 font-medium truncate">${c.title ? `稱號：「${escapeHTML(c.title)}」` : ''}</div>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold border flex-shrink-0 ${factionColor}">${escapeHTML(c.faction || '其他')}</span>
+                        </div>
+                        ${c.origin ? `<div class="text-[11px] text-slate-400 mb-2">國度：${escapeHTML(c.origin)}</div>` : ''}
+                        <p class="text-xs text-slate-300 line-clamp-3 leading-relaxed bg-atelier-bg/60 p-2.5 rounded-xl border border-atelier-border/60 mb-3">${escapeHTML(c.abilities || '尚未設定能力')}</p>
+                    </div>
+                    <div class="flex items-center justify-between pt-2 border-t border-atelier-border/70 text-[11px]">
+                        <span class="text-indigo-300 font-medium">出場劇情：${appearances.length} 幕</span>
+                        <span class="text-slate-400 group-hover:text-slate-200">編輯資料與頭像 →</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // 頭像上傳與 HTML5 Canvas 自動壓縮（確保手機拍照不會撐爆 localStorage）
+        function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file || !editingCharId) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_SIZE = 220;
+                    canvas.width = MAX_SIZE;
+                    canvas.height = MAX_SIZE;
+                    const ctx = canvas.getContext('2d');
+
+                    // 置中裁切正方形頭像
+                    const minSide = Math.min(img.width, img.height);
+                    const sx = (img.width - minSide) / 2;
+                    const sy = (img.height - minSide) / 2;
+                    ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, MAX_SIZE, MAX_SIZE);
+
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                    const proj = getActiveProject();
+                    const charObj = proj.characters.find(c => c.id === editingCharId);
+                    if (charObj) {
+                        charObj.avatar = compressedDataUrl;
+                        saveStateToStorage();
+                        updateCharAvatarPreview(charObj);
+                        showToast('頭像已壓縮並儲存！');
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function removeCharacterAvatar() {
+            if (!editingCharId) return;
+            const proj = getActiveProject();
+            const charObj = proj.characters.find(c => c.id === editingCharId);
+            if (charObj) {
+                charObj.avatar = '';
+                saveStateToStorage();
+                updateCharAvatarPreview(charObj);
+                showToast('已移除頭像');
+            }
+        }
+
+        function updateCharAvatarPreview(charObj) {
+            const preview = document.getElementById('edit-char-avatar-preview');
+            const removeBtn = document.getElementById('btn-remove-avatar');
+            if (charObj.avatar) {
+                preview.innerHTML = `<img src="${charObj.avatar}" class="w-full h-full object-cover">`;
+                removeBtn.classList.remove('hidden');
+            } else {
+                preview.innerHTML = escapeHTML(getCharacterInitial(charObj));
+                removeBtn.classList.add('hidden');
+            }
+        }
+
+        /**
+         * 自定義角色關係圖譜渲染與互動
+         */
+        function renderRelationshipGraph() {
+            const proj = getActiveProject();
+            const nodesLayer = document.getElementById('rel-canvas-nodes');
+
+            nodesLayer.innerHTML = proj.characters.map((c, idx) => {
+                const gx = typeof c.gx === 'number' ? c.gx : (140 + (idx % 4) * 260);
+                const gy = typeof c.gy === 'number' ? c.gy : (140 + Math.floor(idx / 4) * 230);
+                c.gx = gx;
+                c.gy = gy;
+
+                const displayName = getCharacterDisplayName(c);
+                const borderRing = c.faction === '主角方'
+                    ? 'border-amber-400 shadow-amber-500/20'
+                    : (c.faction === '敵對方' ? 'border-rose-500 shadow-rose-500/20' : 'border-indigo-400 shadow-indigo-500/20');
+
+                const avatarInner = c.avatar
+                    ? `<img src="${c.avatar}" class="w-full h-full object-cover pointer-events-none">`
+                    : `<span class="text-xl font-bold text-slate-100 pointer-events-none">${escapeHTML(getCharacterInitial(c))}</span>`;
+
+                return `
+                <div id="rnode-${c.id}" data-draggable-item="true"
+                     onpointerdown="startRelNodeDrag(event, '${c.id}')"
+                     ondblclick="openCharEditor('${c.id}')"
+                     style="transform: translate(${gx - 48}px, ${gy - 48}px); width: 96px;"
+                     class="absolute top-0 left-0 flex flex-col items-center cursor-move select-none group">
+                    <div class="w-16 h-16 rounded-full bg-atelier-surface border-2 ${borderRing} shadow-xl overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105">
+                        ${avatarInner}
+                    </div>
+                    <div class="mt-1.5 px-2.5 py-0.5 rounded-full bg-atelier-surface/95 border border-atelier-border text-xs font-bold text-slate-100 whitespace-nowrap shadow">
+                        ${escapeHTML(displayName)}
+                    </div>
+                    ${c.title && (c.name || '').trim() ? `<div class="text-[10px] text-amber-300/90 mt-0.5 whitespace-nowrap">「${escapeHTML(c.title)}」</div>` : ''}
+                </div>`;
+            }).join('');
+
+            drawRelationshipEdges();
+        }
+
+        function drawRelationshipEdges() {
+            const proj = getActiveProject();
+            const svgLayer = document.getElementById('rel-canvas-edges');
+            const labelsLayer = document.getElementById('rel-canvas-labels');
+            const rels = proj.relationships || [];
+
+            // 統計同一對角色之間有幾條平行關係線，自動計算弧度偏移避免重疊
+            const pairGroups = {};
+            rels.forEach(r => {
+                const pairKey = [r.from, r.to].sort().join('__');
+                if (!pairGroups[pairKey]) pairGroups[pairKey] = [];
+                pairGroups[pairKey].push(r.id);
+            });
+
+            let defsHTML = '<defs>';
+            let pathsHTML = '';
+            let labelsHTML = '';
+
+            rels.forEach(r => {
+                const c1 = proj.characters.find(c => c.id === r.from);
+                const c2 = proj.characters.find(c => c.id === r.to);
+                if (!c1 || !c2) return;
+
+                const x1 = c1.gx || 140;
+                const y1 = c1.gy || 140;
+                const x2 = c2.gx || 340;
+                const y2 = c2.gy || 140;
+
+                const color = r.color || '#f59e0b';
+                const markerEndId = `rel-arrow-end-${r.id}`;
+                const markerStartId = `rel-arrow-start-${r.id}`;
+
+                defsHTML += `
+                    <marker id="${markerEndId}" markerWidth="9" markerHeight="7" refX="26" refY="3.5" orient="auto">
+                        <polygon points="0 0, 9 3.5, 0 7" fill="${color}" />
+                    </marker>
+                    <marker id="${markerStartId}" markerWidth="9" markerHeight="7" refX="-17" refY="3.5" orient="auto">
+                        <polygon points="9 0, 0 3.5, 9 7" fill="${color}" />
+                    </marker>`;
+
+                // 計算平行關係的彎曲偏移
+                const pairKey = [r.from, r.to].sort().join('__');
+                const siblings = pairGroups[pairKey];
+                const sibIdx = siblings.indexOf(r.id);
+                const offsetIndex = sibIdx - (siblings.length - 1) / 2;
+
+                const mx = (x1 + x2) / 2;
+                const my = (y1 + y2) / 2;
+                const dx = x2 - x1;
+                const dy = y2 - y1;
+                const dist = Math.hypot(dx, dy) || 1;
+                const nx = -dy / dist;
+                const ny = dx / dist;
+
+                // 即使只有一條線也給一點微弧度或直線，多條線則明顯分開
+                const curveOffset = siblings.length > 1 ? offsetIndex * 54 : 0;
+                const cx = mx + nx * curveOffset;
+                const cy = my + ny * curveOffset;
+
+                // 標籤位於二次貝茲曲線中點 (t = 0.5)
+                const labelX = 0.25 * x1 + 0.5 * cx + 0.25 * x2;
+                const labelY = 0.25 * y1 + 0.5 * cy + 0.25 * y2;
+
+                const dashAttr = r.style === 'dashed' ? 'stroke-dasharray="7 5"' : (r.style === 'dotted' ? 'stroke-dasharray="2 5"' : '');
+                const markerEndAttr = (r.direction === 'directed' || r.direction === 'bidirectional') ? `marker-end="url(#${markerEndId})"` : '';
+                const markerStartAttr = r.direction === 'bidirectional' ? `marker-start="url(#${markerStartId})"` : '';
+
+                pathsHTML += `<path d="M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}" stroke="${color}" stroke-width="2.4" fill="none" ${dashAttr} ${markerEndAttr} ${markerStartAttr} />`;
+
+                const dirSymbol = r.direction === 'bidirectional' ? ' ↔ ' : (r.direction === 'directed' ? ' → ' : ' — ');
+                labelsHTML += `
+                    <button type="button" data-rel-label="true"
+                        onpointerdown="event.stopPropagation()"
+                        onclick="openRelationModal('${r.id}')"
+                        style="left: ${labelX}px; top: ${labelY}px; border-color: ${color}; color: ${color};"
+                        class="pointer-events-auto -translate-x-1/2 -translate-y-1/2 absolute px-2.5 py-1 rounded-full bg-atelier-bg/95 hover:bg-atelier-card border text-[11px] font-bold whitespace-nowrap shadow-lg transition transform hover:scale-105 cursor-pointer">
+                        ${escapeHTML(r.label || '關係')}
+                    </button>`;
+            });
+
+            defsHTML += '</defs>';
+            svgLayer.innerHTML = defsHTML + pathsHTML;
+            labelsLayer.innerHTML = labelsHTML;
+        }
+
+        let draggingRelNode = null;
+        let relDragOffset = { x: 0, y: 0 };
+
+        function startRelNodeDrag(e, charId) {
+            e.stopPropagation();
+            const proj = getActiveProject();
+            const c = proj.characters.find(x => x.id === charId);
+            if (!c) return;
+            draggingRelNode = c;
+            const scale = relCanvasCtrl ? relCanvasCtrl.scale : 1;
+            relDragOffset.x = e.clientX / scale - (c.gx || 140);
+            relDragOffset.y = e.clientY / scale - (c.gy || 140);
+        }
+
+        // 全域指標移動與釋放（同時支援分支節點與關係圖節點拖曳）
+        document.addEventListener('pointermove', (e) => {
+            if (draggingPlotNode) {
+                const scale = plotCanvasCtrl ? plotCanvasCtrl.scale : 1;
+                draggingPlotNode.x = Math.max(0, Math.round(e.clientX / scale - plotDragOffset.x));
+                draggingPlotNode.y = Math.max(0, Math.round(e.clientY / scale - plotDragOffset.y));
+                const el = document.getElementById(`pnode-${draggingPlotNode.id}`);
+                if (el) el.style.transform = `translate(${draggingPlotNode.x}px, ${draggingPlotNode.y}px)`;
+                drawPlotCanvasEdges();
+            }
+            if (draggingRelNode) {
+                const scale = relCanvasCtrl ? relCanvasCtrl.scale : 1;
+                draggingRelNode.gx = Math.max(50, Math.round(e.clientX / scale - relDragOffset.x));
+                draggingRelNode.gy = Math.max(50, Math.round(e.clientY / scale - relDragOffset.y));
+                const el = document.getElementById(`rnode-${draggingRelNode.id}`);
+                if (el) el.style.transform = `translate(${draggingRelNode.gx - 48}px, ${draggingRelNode.gy - 48}px)`;
+                drawRelationshipEdges();
+            }
+        });
+
+        document.addEventListener('pointerup', () => {
+            if (draggingPlotNode || draggingRelNode) {
+                draggingPlotNode = null;
+                draggingRelNode = null;
+                saveStateToStorage(false);
+            }
+        });
+
+        // 開啟自定義關係 Modal
+        function openRelationModal(relId = null) {
+            const proj = getActiveProject();
+            if (proj.characters.length < 2) {
+                showToast('至少需要建立兩名角色才能設定關係');
+                return;
+            }
+            editingRelationId = relId;
+
+            const charOptions = proj.characters.map(c =>
+                `<option value="${c.id}">${escapeHTML(getCharacterDisplayName(c))}</option>`
+            ).join('');
+            const fromSel = document.getElementById('rel-from-select');
+            const toSel = document.getElementById('rel-to-select');
+            fromSel.innerHTML = charOptions;
+            toSel.innerHTML = charOptions;
+
+            const delBtn = document.getElementById('btn-delete-relation');
+            const modalTitle = document.getElementById('relation-modal-title');
+
+            if (relId) {
+                const rel = (proj.relationships || []).find(r => r.id === relId);
+                if (!rel) return;
+                modalTitle.textContent = '編輯自定義關係';
+                fromSel.value = rel.from;
+                toSel.value = rel.to;
+                document.getElementById('rel-label-input').value = rel.label || '';
+                document.getElementById('rel-color-input').value = rel.color || '#f59e0b';
+                document.getElementById('rel-style-select').value = rel.style || 'solid';
+                document.getElementById('rel-note-input').value = rel.note || '';
+                document.querySelectorAll('input[name="rel-direction"]').forEach(radio => {
+                    radio.checked = radio.value === (rel.direction || 'directed');
+                });
+                delBtn.classList.remove('hidden');
+            } else {
+                modalTitle.textContent = '新增自定義關係';
+                fromSel.selectedIndex = 0;
+                toSel.selectedIndex = 1;
+                document.getElementById('rel-label-input').value = '';
+                document.getElementById('rel-color-input').value = '#f59e0b';
+                document.getElementById('rel-style-select').value = 'solid';
+                document.getElementById('rel-note-input').value = '';
+                document.querySelector('input[name="rel-direction"][value="directed"]').checked = true;
+                delBtn.classList.add('hidden');
+            }
+
+            document.getElementById('relation-modal').classList.remove('hidden');
+        }
+
+        function closeRelationModal() {
+            editingRelationId = null;
+            document.getElementById('relation-modal').classList.add('hidden');
+        }
+
+        function fillRelPreset(text) {
+            document.getElementById('rel-label-input').value = text;
+        }
+
+        function setRelColor(hex) {
+            document.getElementById('rel-color-input').value = hex;
+        }
+
+        function saveRelationForm() {
+            const proj = getActiveProject();
+            if (!proj.relationships) proj.relationships = [];
+
+            const from = document.getElementById('rel-from-select').value;
+            const to = document.getElementById('rel-to-select').value;
+            if (from === to) {
+                showToast('起點與對象不能為同一位角色');
+                return;
+            }
+            const label = document.getElementById('rel-label-input').value.trim();
+            if (!label) {
+                showToast('請輸入自定義關係標籤文字');
+                return;
+            }
+            const direction = document.querySelector('input[name="rel-direction"]:checked')?.value || 'directed';
+            const color = document.getElementById('rel-color-input').value;
+            const style = document.getElementById('rel-style-select').value;
+            const note = document.getElementById('rel-note-input').value.trim();
+
+            const relObj = {
+                id: editingRelationId || ('rel_' + Date.now()),
+                from,
+                to,
+                label,
+                direction,
+                color,
+                style,
+                note
+            };
+
+            if (editingRelationId) {
+                const idx = proj.relationships.findIndex(r => r.id === editingRelationId);
+                if (idx >= 0) proj.relationships[idx] = relObj;
+            } else {
+                proj.relationships.push(relObj);
+            }
+
+            saveStateToStorage();
+            closeRelationModal();
+            refreshAllViews();
+            showToast('已儲存自定義關係！');
+        }
+
+        function deleteEditingRelation() {
+            if (!editingRelationId) return;
+            const proj = getActiveProject();
+            proj.relationships = (proj.relationships || []).filter(r => r.id !== editingRelationId);
+            saveStateToStorage();
+            closeRelationModal();
+            refreshAllViews();
+            showToast('已刪除該關係連線');
+        }
+
+        /**
+         * ============================================================================
+         * 8. 全螢幕節點與角色編輯器操作
+         * ============================================================================
+         */
+        function createNewPlotNode() {
+            const proj = getActiveProject();
+            const newId = 'node_' + Date.now();
+            proj.nodes.push({
+                id: newId,
+                title: `新劇情節點 #${proj.nodes.length + 1}`,
+                type: '一般劇情',
+                scene: '',
+                condition: '',
+                memoryReqId: '',
+                summary: '',
+                content: '',
+                characters: [],
+                nextNodes: [],
+                notes: '',
+                x: 100 + (proj.nodes.length % 3) * 290,
+                y: 120 + Math.floor(proj.nodes.length / 3) * 190
+            });
+            saveStateToStorage();
+            openPlotEditor(newId);
+        }
+
+        function openPlotEditor(nodeId) {
+            const proj = getActiveProject();
+            const node = proj.nodes.find(n => n.id === nodeId);
+            if (!node) return;
+            editingNodeId = nodeId;
+
+            document.getElementById('edit-node-title').value = node.title || '';
+            document.getElementById('edit-node-type').value = node.type || '一般劇情';
+            document.getElementById('edit-node-scene').value = node.scene || '';
+            document.getElementById('edit-node-condition').value = node.condition || '';
+            document.getElementById('edit-node-summary').value = node.summary || '';
+            document.getElementById('edit-node-content').value = node.content || '';
+            document.getElementById('edit-node-notes').value = node.notes || '';
+            document.getElementById('editor-word-count').textContent = `${(node.content || '').length} 字`;
+
+            const memSel = document.getElementById('edit-node-memory-req');
+            memSel.innerHTML = `<option value="">無記憶限制</option>` +
+                proj.memories.map(m => `<option value="${m.id}" ${node.memoryReqId === m.id ? 'selected' : ''}>${escapeHTML(m.title)}</option>`).join('');
+
+            const charContainer = document.getElementById('edit-node-chars-selector');
+            charContainer.innerHTML = proj.characters.map(c => {
+                const selected = (node.characters || []).includes(c.id);
+                return `
+                <button type="button" onclick="toggleNodeCharacter('${c.id}')"
+                    class="px-3 py-1 rounded-full text-xs font-medium border transition ${
+                        selected ? 'bg-indigo-500 text-white border-indigo-400' : 'bg-atelier-bg text-slate-400 border-atelier-border hover:text-slate-200'
+                    }">
+                    ${selected ? '✓ ' : '+ '}${escapeHTML(getCharacterDisplayName(c))}
+                </button>`;
+            }).join('');
+
+            const nextContainer = document.getElementById('edit-node-next-selector');
+            const otherNodes = proj.nodes.filter(n => n.id !== node.id);
+            nextContainer.innerHTML = otherNodes.length === 0
+                ? '<div class="text-xs text-slate-500">尚無其他可連接的節點</div>'
+                : otherNodes.map(other => {
+                    const checked = (node.nextNodes || []).includes(other.id);
+                    return `
+                    <label class="flex items-center gap-2 p-2 rounded-xl bg-atelier-bg border border-atelier-border cursor-pointer text-xs text-slate-200">
+                        <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleNodeNextLink('${other.id}', this.checked)" class="accent-amber-500">
+                        <span class="truncate">${escapeHTML(other.title)}</span>
+                    </label>`;
+                }).join('');
+
+            document.getElementById('plot-editor-modal').classList.remove('hidden');
+        }
+
+        function toggleNodeCharacter(charId) {
+            const proj = getActiveProject();
+            const node = proj.nodes.find(n => n.id === editingNodeId);
+            if (!node) return;
+            if (!node.characters) node.characters = [];
+            const idx = node.characters.indexOf(charId);
+            if (idx >= 0) node.characters.splice(idx, 1);
+            else node.characters.push(charId);
+            saveStateToStorage();
+            openPlotEditor(editingNodeId);
+        }
+
+        function toggleNodeNextLink(targetId, isChecked) {
+            const proj = getActiveProject();
+            const node = proj.nodes.find(n => n.id === editingNodeId);
+            if (!node) return;
+            if (!node.nextNodes) node.nextNodes = [];
+            if (isChecked && !node.nextNodes.includes(targetId)) node.nextNodes.push(targetId);
+            else if (!isChecked) node.nextNodes = node.nextNodes.filter(id => id !== targetId);
+            saveStateToStorage();
+        }
+
+        function autoSaveCurrentNode() {
+            const proj = getActiveProject();
+            const node = proj.nodes.find(n => n.id === editingNodeId);
+            if (!node) return;
+            node.title = document.getElementById('edit-node-title').value;
+            node.type = document.getElementById('edit-node-type').value;
+            node.scene = document.getElementById('edit-node-scene').value;
+            node.condition = document.getElementById('edit-node-condition').value;
+            node.memoryReqId = document.getElementById('edit-node-memory-req').value;
+            node.summary = document.getElementById('edit-node-summary').value;
+            node.content = document.getElementById('edit-node-content').value;
+            node.notes = document.getElementById('edit-node-notes').value;
+            document.getElementById('editor-word-count').textContent = `${node.content.length} 字`;
+            saveStateToStorage();
+        }
+
+        function closePlotEditor() {
+            editingNodeId = null;
+            document.getElementById('plot-editor-modal').classList.add('hidden');
+            refreshAllViews();
+        }
+
+        function deleteCurrentPlotNode() {
+            if (!editingNodeId) return;
+            const proj = getActiveProject();
+            proj.nodes = proj.nodes.filter(n => n.id !== editingNodeId);
+            proj.nodes.forEach(n => {
+                if (n.nextNodes) n.nextNodes = n.nextNodes.filter(id => id !== editingNodeId);
+            });
+            saveStateToStorage();
+            closePlotEditor();
+            showToast('已刪除劇情節點');
+        }
+
+        function createNewCharacter() {
+            const proj = getActiveProject();
+            const newId = 'char_' + Date.now();
+            proj.characters.push({
+                id: newId,
+                name: '',
+                title: '新角色',
+                faction: '主角方',
+                origin: '',
+                appearance: '',
+                personality: '',
+                abilities: '',
+                quotes: '',
+                backstory: '',
+                avatar: '',
+                gx: 200 + (proj.characters.length % 4) * 220,
+                gy: 200 + Math.floor(proj.characters.length / 4) * 200
+            });
+            saveStateToStorage();
+            openCharEditor(newId);
+        }
+
+        function openCharEditor(charId) {
+            const proj = getActiveProject();
+            const c = proj.characters.find(x => x.id === charId);
+            if (!c) return;
+            editingCharId = charId;
+
+            updateCharAvatarPreview(c);
+            document.getElementById('edit-char-name').value = c.name || '';
+            document.getElementById('edit-char-title').value = c.title || '';
+            document.getElementById('edit-char-faction').value = c.faction || '主角方';
+            document.getElementById('edit-char-origin').value = c.origin || '';
+            document.getElementById('edit-char-appearance').value = c.appearance || '';
+            document.getElementById('edit-char-personality').value = c.personality || '';
+            document.getElementById('edit-char-abilities').value = c.abilities || '';
+            document.getElementById('edit-char-quotes').value = c.quotes || '';
+            document.getElementById('edit-char-backstory').value = c.backstory || '';
+
+            const appearances = proj.nodes.filter(n => (n.characters || []).includes(c.id));
+            document.getElementById('char-appearance-count').textContent = `${appearances.length} 節點`;
+            const appList = document.getElementById('char-appearances-list');
+            appList.innerHTML = appearances.length === 0
+                ? '<div class="text-xs text-slate-400">此角色尚未在任何劇情節點中被標記出場。</div>'
+                : appearances.map(n => `
+                    <div onclick="closeCharEditor(); switchTab('plot'); openPlotEditor('${n.id}');" class="cursor-pointer flex items-center justify-between p-2.5 rounded-xl bg-atelier-bg hover:bg-slate-800 border border-atelier-border text-xs">
+                        <span class="font-bold text-slate-200">${escapeHTML(n.title)}</span>
+                        <span class="text-amber-400">前往編輯 →</span>
+                    </div>
+                `).join('');
+
+            document.getElementById('char-editor-modal').classList.remove('hidden');
+        }
+
+        function autoSaveCurrentChar() {
+            const proj = getActiveProject();
+            const c = proj.characters.find(x => x.id === editingCharId);
+            if (!c) return;
+            c.name = document.getElementById('edit-char-name').value;
+            c.title = document.getElementById('edit-char-title').value;
+            c.faction = document.getElementById('edit-char-faction').value;
+            c.origin = document.getElementById('edit-char-origin').value;
+            c.appearance = document.getElementById('edit-char-appearance').value;
+            c.personality = document.getElementById('edit-char-personality').value;
+            c.abilities = document.getElementById('edit-char-abilities').value;
+            c.quotes = document.getElementById('edit-char-quotes').value;
+            c.backstory = document.getElementById('edit-char-backstory').value;
+            if (!c.avatar) updateCharAvatarPreview(c);
+            saveStateToStorage();
+        }
+
+        function closeCharEditor() {
+            editingCharId = null;
+            document.getElementById('char-editor-modal').classList.add('hidden');
+            refreshAllViews();
+        }
+
+        function deleteCurrentCharacter() {
+            if (!editingCharId) return;
+            const proj = getActiveProject();
+            proj.characters = proj.characters.filter(c => c.id !== editingCharId);
+            proj.relationships = (proj.relationships || []).filter(r => r.from !== editingCharId && r.to !== editingCharId);
+            proj.nodes.forEach(n => {
+                if (n.characters) n.characters = n.characters.filter(id => id !== editingCharId);
+            });
+            saveStateToStorage();
+            closeCharEditor();
+            showToast('已刪除角色與相關連線');
+        }
+
+        /**
+         * ============================================================================
+         * 9. 機制分頁（記憶・輪迴・存讀檔印記）與備份管理
+         * ============================================================================
+         */
+        function switchMechSubTab(sub) {
+            activeMechSubTab = sub;
+            document.querySelectorAll('.mech-sub-btn').forEach(btn => {
+                const active = btn.getAttribute('data-mech') === sub;
+                btn.className = active
+                    ? 'mech-sub-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap border bg-amber-500 text-slate-950 border-amber-500 transition'
+                    : 'mech-sub-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap border bg-atelier-surface text-slate-400 border-atelier-border hover:text-slate-200 transition';
+            });
+            document.querySelectorAll('.mech-panel').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`mech-panel-${sub}`).classList.remove('hidden');
+        }
+
+        function renderMechanicsViews() {
+            switchMechSubTab(activeMechSubTab);
+            renderMemoriesList();
+            renderLoopsList();
+            renderAnchorPanel();
+        }
+
+        function renderMemoriesList() {
+            const proj = getActiveProject();
+            const container = document.getElementById('memory-list-container');
+            if (proj.memories.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 bg-atelier-surface border border-atelier-border rounded-2xl text-xs text-slate-400">尚未建立任何記憶資料</div>`;
+                return;
+            }
+            container.innerHTML = proj.memories.map(m => {
+                const unlockedNodes = proj.nodes.filter(n => n.memoryReqId === m.id);
+                const fadingSoon = !m.isPermanent && m.remainingLoops <= 1;
+                return `
+                <div onclick="openMemoryModal('${m.id}')" class="cursor-pointer bg-atelier-surface hover:bg-atelier-card border ${fadingSoon ? 'border-rose-500/50' : 'border-atelier-border'} rounded-2xl p-4 space-y-2.5 transition">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <span class="px-2 py-0.5 rounded bg-slate-800 text-amber-300 text-[11px] font-medium">${escapeHTML(m.category)}</span>
+                            <h4 class="font-bold text-slate-100 text-sm sm:text-base mt-1">${escapeHTML(m.title)}</h4>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-[11px] font-mono font-bold ${
+                            m.isPermanent ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : (fadingSoon ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-indigo-500/15 text-indigo-300')
+                        }">
+                            ${m.isPermanent ? '永久記憶' : `剩餘 ${m.remainingLoops} / ${m.maxLoops} 輪`}
+                        </span>
+                    </div>
+                    <div class="text-[11px] text-slate-400">取得來源：${escapeHTML(m.source || '未標註')}</div>
+                    <p class="text-xs text-slate-300 leading-relaxed">${escapeHTML(m.content)}</p>
+                    <div class="pt-2 border-t border-atelier-border/60 text-[11px] text-amber-400/90">
+                        解鎖劇情：${unlockedNodes.length > 0 ? unlockedNodes.map(n => escapeHTML(n.title)).join('、') : '尚無綁定劇情'}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function simulateNextLoopDecay() {
+            const proj = getActiveProject();
+            let forgottenCount = 0;
+            proj.memories = proj.memories.filter(m => {
+                if (m.isPermanent) return true;
+                m.remainingLoops = Math.max(0, (m.remainingLoops || 1) - 1);
+                if (m.remainingLoops === 0) {
+                    forgottenCount++;
+                    return false;
+                }
+                return true;
+            });
+            saveStateToStorage();
+            renderMemoriesList();
+            showToast(`已模擬進入下一輪，共有 ${forgottenCount} 份非永久記憶遺忘`);
+        }
+
+        function openMemoryModal(memId = null) {
+            editingMemoryId = memId;
+            const proj = getActiveProject();
+            const delBtn = document.getElementById('btn-delete-memory');
+            if (memId) {
+                const m = proj.memories.find(x => x.id === memId);
+                document.getElementById('mem-title').value = m.title;
+                document.getElementById('mem-category').value = m.category;
+                document.getElementById('mem-source').value = m.source;
+                document.getElementById('mem-content').value = m.content;
+                document.getElementById('mem-permanent').checked = !!m.isPermanent;
+                document.getElementById('mem-max-loops').value = m.maxLoops || 2;
+                document.getElementById('mem-rem-loops').value = m.remainingLoops || 1;
+                delBtn.classList.remove('hidden');
+            } else {
+                document.getElementById('mem-title').value = '';
+                document.getElementById('mem-category').value = '事件情報';
+                document.getElementById('mem-source').value = '';
+                document.getElementById('mem-content').value = '';
+                document.getElementById('mem-permanent').checked = false;
+                document.getElementById('mem-max-loops').value = 2;
+                document.getElementById('mem-rem-loops').value = 2;
+                delBtn.classList.add('hidden');
+            }
+            document.getElementById('memory-modal').classList.remove('hidden');
+        }
+        function closeMemoryModal() { editingMemoryId = null; document.getElementById('memory-modal').classList.add('hidden'); }
+        function saveMemoryForm() {
+            const proj = getActiveProject();
+            const title = document.getElementById('mem-title').value.trim();
+            if (!title) return showToast('請輸入記憶名稱');
+            const data = {
+                id: editingMemoryId || ('mem_' + Date.now()),
+                title,
+                category: document.getElementById('mem-category').value,
+                source: document.getElementById('mem-source').value.trim(),
+                content: document.getElementById('mem-content').value.trim(),
+                isPermanent: document.getElementById('mem-permanent').checked,
+                maxLoops: parseInt(document.getElementById('mem-max-loops').value) || 1,
+                remainingLoops: parseInt(document.getElementById('mem-rem-loops').value) || 1
+            };
+            if (editingMemoryId) {
+                const idx = proj.memories.findIndex(x => x.id === editingMemoryId);
+                if (idx >= 0) proj.memories[idx] = data;
+            } else {
+                proj.memories.push(data);
+            }
+            saveStateToStorage();
+            closeMemoryModal();
+            refreshAllViews();
+        }
+        function deleteEditingMemory() {
+            if (!editingMemoryId) return;
+            const proj = getActiveProject();
+            proj.memories = proj.memories.filter(m => m.id !== editingMemoryId);
+            saveStateToStorage();
+            closeMemoryModal();
+            refreshAllViews();
+        }
+
+        function renderLoopsList() {
+            const proj = getActiveProject();
+            document.getElementById('loop-list-container').innerHTML = proj.loops.map(l => {
+                const isForced = l.endType.includes('強制重置');
+                return `
+                <div class="bg-atelier-surface border border-atelier-border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-100 text-sm sm:text-base">${escapeHTML(l.number)}</span>
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isForced ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-indigo-500/20 text-indigo-300'}">${escapeHTML(l.endType)}</span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">${escapeHTML(l.summary)}</p>
+                    </div>
+                    <button onclick="deleteLoopRecord('${l.id}')" class="self-end sm:self-center text-xs text-slate-500 hover:text-rose-400">刪除</button>
+                </div>`;
+            }).join('');
+        }
+        function openLoopModal() {
+            document.getElementById('loop-number').value = `第 ${getActiveProject().loops.length + 1} 輪迴`;
+            document.getElementById('loop-summary').value = '';
+            document.getElementById('loop-modal').classList.remove('hidden');
+        }
+        function closeLoopModal() { document.getElementById('loop-modal').classList.add('hidden'); }
+        function saveLoopForm() {
+            const proj = getActiveProject();
+            proj.loops.push({
+                id: 'loop_' + Date.now(),
+                number: document.getElementById('loop-number').value.trim() || '未命名輪迴',
+                endType: document.getElementById('loop-end-type').value,
+                summary: document.getElementById('loop-summary').value.trim()
+            });
+            saveStateToStorage();
+            closeLoopModal();
+            refreshAllViews();
+        }
+        function deleteLoopRecord(id) {
+            const proj = getActiveProject();
+            proj.loops = proj.loops.filter(l => l.id !== id);
+            saveStateToStorage();
+            refreshAllViews();
+        }
+
+        function renderAnchorPanel() {
+            const proj = getActiveProject();
+            if (!proj.anchor) proj.anchor = { target: '未設定', timestamp: '', isValid: true, usedCount: 0, maxLimit: 3, logs: [] };
+            const a = proj.anchor;
+            document.getElementById('anchor-target-input').value = a.target || '';
+            document.getElementById('anchor-time-input').value = a.timestamp || '';
+            document.getElementById('anchor-used-input').value = a.usedCount || 0;
+            document.getElementById('anchor-max-input').value = a.maxLimit || 3;
+            document.getElementById('anchor-valid-checkbox').checked = !!a.isValid;
+
+            const badge = document.getElementById('anchor-status-badge');
+            badge.textContent = a.isValid ? '印記有效・可讀檔' : '標的物受損・印記失效';
+            badge.className = a.isValid
+                ? 'self-start px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                : 'self-start px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40';
+
+            document.getElementById('anchor-logs-list').innerHTML = (a.logs || []).map(l => `<div>${escapeHTML(l)}</div>`).join('') || '<div class="text-slate-500">尚無日誌</div>';
+        }
+        function updateAnchorData(field, val) {
+            const proj = getActiveProject();
+            proj.anchor[field] = val;
+            if (field === 'isValid' && !val) proj.anchor.logs.unshift(`[失效] 標的物「${proj.anchor.target}」受損，印記失效！`);
+            saveStateToStorage();
+            renderAnchorPanel();
+        }
+        function recordNewAnchorOverwrite() {
+            const proj = getActiveProject();
+            proj.anchor.isValid = true;
+            proj.anchor.logs.unshift(`[覆蓋] 於「${proj.anchor.timestamp || '新時間點'}」重新刻錄印記於「${proj.anchor.target}」`);
+            saveStateToStorage();
+            renderAnchorPanel();
+            showToast('已記錄新的存檔印記覆蓋');
+        }
+        function triggerAnchorLoadTest() {
+            const proj = getActiveProject();
+            const a = proj.anchor;
+            if (!a.isValid) return showToast('標的物已破壞，無法發動［讀檔］！');
+            a.usedCount = (a.usedCount || 0) + 1;
+            if (a.usedCount >= a.maxLimit) {
+                a.logs.unshift(`[強制重置] 讀檔達上限 (${a.usedCount}/${a.maxLimit})，觸發全遊戲強制重置回到起始日！`);
+                proj.loops.push({
+                    id: 'loop_' + Date.now(),
+                    number: `第 ${proj.loops.length + 1} 輪迴（強制重置）`,
+                    endType: '能力過度使用強制重置',
+                    summary: `因［讀檔］使用次數達上限 (${a.usedCount}/${a.maxLimit})，強制重置回起始日。`
+                });
+                a.usedCount = 0;
+                showToast('讀檔達上限！已觸發強制重置紀錄');
+            } else {
+                a.logs.unshift(`[讀檔] 回溯至「${a.target}」（已用 ${a.usedCount}/${a.maxLimit} 次）`);
+                showToast(`已模擬讀檔 (${a.usedCount}/${a.maxLimit})`);
+            }
+            saveStateToStorage();
+            refreshAllViews();
+        }
+
+        function renderProjectManagerList() {
+            document.getElementById('project-manager-list').innerHTML = appState.projects.map(p => {
+                const isActive = p.id === appState.activeProjectId;
+                return `
+                <div class="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-atelier-bg border ${isActive ? 'border-amber-500/60' : 'border-atelier-border'}">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-sm text-slate-100 truncate">${escapeHTML(p.title)}</span>
+                            ${isActive ? '<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">目前編輯中</span>' : ''}
+                        </div>
+                        <div class="text-xs text-slate-400 mt-0.5">${p.nodes.length} 劇情節點 ・ ${p.characters.length} 角色 ・ ${(p.relationships||[]).length} 關係連線</div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        ${!isActive ? `<button onclick="switchProject('${p.id}')" class="px-3 py-1.5 rounded-lg bg-atelier-card hover:bg-slate-700 text-xs text-slate-200">切換</button>` : ''}
+                        ${appState.projects.length > 1 ? `<button onclick="deleteProjectById('${p.id}')" class="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs">刪除</button>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function openNewProjectModal() {
+            document.getElementById('new-proj-title').value = '';
+            document.getElementById('new-proj-subtitle').value = '';
+            document.getElementById('new-project-modal').classList.remove('hidden');
+        }
+        function closeNewProjectModal() { document.getElementById('new-project-modal').classList.add('hidden'); }
+        function confirmCreateProject() {
+            const title = document.getElementById('new-proj-title').value.trim();
+            if (!title) return showToast('請輸入作品專案名稱');
+            const newProj = {
+                id: 'proj_' + Date.now(),
+                title,
+                subtitle: document.getElementById('new-proj-subtitle').value.trim(),
+                worldview: '',
+                nodes: [],
+                characters: [],
+                relationships: [],
+                memories: [],
+                loops: [],
+                anchor: { target: '未設定', timestamp: '', isValid: true, usedCount: 0, maxLimit: 3, logs: [] }
+            };
+            appState.projects.push(newProj);
+            appState.activeProjectId = newProj.id;
+            saveStateToStorage();
+            closeNewProjectModal();
+            refreshAllViews();
+            switchTab('overview');
+            showToast(`已建立新專案：${title}`);
+        }
+        function deleteProjectById(id) {
+            if (appState.projects.length <= 1) return;
+            appState.projects = appState.projects.filter(p => p.id !== id);
+            if (appState.activeProjectId === id) appState.activeProjectId = appState.projects[0].id;
+            saveStateToStorage();
+            refreshAllViews();
+            showToast('已刪除專案');
+        }
+
+        function exportAllDataJSON() {
+            const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `StoryAtelier_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('已匯出 Story Atelier 完整備份檔');
+        }
+
+        function importDataJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported && Array.isArray(imported.projects) && imported.projects.length > 0) {
+                        appState = imported;
+                        saveStateToStorage();
+                        refreshAllViews();
+                        showToast('JSON 備份還原成功！');
+                    } else {
+                        showToast('檔案格式不正確');
+                    }
+                } catch (err) {
+                    showToast('解析 JSON 檔案失敗');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function resetToDefaultDemo() {
+            appState = createDefaultSeedData();
+            saveStateToStorage();
+            refreshAllViews();
+            showToast('已還原預設範例資料');
+        }
+
+        window.onload = function() {
+            plotCanvasCtrl = new InteractivePanZoomCanvas('plot-canvas-viewport', 'plot-canvas-world', 'plot-canvas-zoom-label');
+            relCanvasCtrl = new InteractivePanZoomCanvas('rel-canvas-viewport', 'rel-canvas-world', 'rel-canvas-zoom-label');
+            switchTab('overview');
+            setPlotViewMode('list');
+            setCharViewMode('list');
+        };
+    </script>
+</body>
+</html>
