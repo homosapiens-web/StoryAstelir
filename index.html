@@ -121,7 +121,7 @@
             </button>
             <button onclick="switchTab('backup')" data-nav="backup" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                <span>備份與專案管理</span>
+                <span>同步備份與專案</span>
             </button>
         </nav>
 
@@ -217,6 +217,9 @@
                 </div>
 
                 <div class="flex items-center gap-2">
+                    <button onclick="openVNPlayer()" class="px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-xs sm:text-sm font-bold text-emerald-300 transition active:scale-95">
+                        ▶ 試玩模擬
+                    </button>
                     <button id="btn-canvas-connect-mode" onclick="toggleCanvasConnectMode()" class="hidden px-3 py-2 rounded-xl bg-atelier-surface hover:bg-atelier-card border border-atelier-border text-xs font-medium text-slate-200 transition">
                         🔗 連線模式：關
                     </button>
@@ -390,61 +393,118 @@
                 <div id="loop-list-container" class="space-y-3"></div>
             </div>
 
-            <!-- 存檔印記與讀檔限制系統 -->
+            <!-- 存檔印記與讀檔限制管理 -->
             <div id="mech-panel-anchor" class="mech-panel hidden space-y-4">
-                <div class="bg-atelier-surface border border-atelier-border rounded-2xl p-5 space-y-5">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-atelier-border pb-4">
+                <div class="bg-atelier-surface border border-atelier-border rounded-2xl p-5 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-atelier-border pb-3">
                         <div>
-                            <h3 class="font-bold text-amber-300 text-base">［讀檔］印記與使用上限控制台</h3>
-                            <p class="text-xs text-slate-400 mt-0.5">每輪僅能存在一個有效印記；標的物破壞則失效；達使用上限觸發強制重置</p>
+                            <h3 class="font-bold text-slate-100 text-base">［讀檔］存檔印記與使用上限控制台</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">每輪僅能存在一個有效印記；標的物破壞則印記失效，讀檔達上限將觸發強制重置</p>
                         </div>
-                        <span id="anchor-status-badge" class="self-start px-3 py-1 rounded-full text-xs font-bold">印記有效</span>
+                        <span id="anchor-status-badge" class="self-start px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                            印記有效・可讀檔
+                        </span>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         <div>
-                            <label class="text-xs text-slate-400 block mb-1">目前印記依附標的物</label>
-                            <input id="anchor-target-input" type="text" onchange="updateAnchorData('target', this.value)" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-amber-500">
+                            <label class="text-xs text-slate-400 block mb-1">目前依附標的物</label>
+                            <input id="anchor-target-input" type="text" oninput="updateAnchorData('target', this.value)" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-amber-500">
                         </div>
                         <div>
                             <label class="text-xs text-slate-400 block mb-1">印記刻錄時間點</label>
-                            <input id="anchor-time-input" type="text" onchange="updateAnchorData('timestamp', this.value)" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-amber-500">
+                            <input id="anchor-time-input" type="text" oninput="updateAnchorData('timestamp', this.value)" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
                         </div>
                         <div>
                             <label class="text-xs text-slate-400 block mb-1">本輪已使用讀檔次數</label>
-                            <div class="flex items-center gap-2">
-                                <input id="anchor-used-input" type="number" min="0" onchange="updateAnchorData('usedCount', parseInt(this.value)||0)" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm font-mono text-slate-100 focus:outline-none focus:border-amber-500">
-                                <button onclick="triggerAnchorLoadTest()" class="px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold whitespace-nowrap">
-                                    模擬讀檔 +1
-                                </button>
-                            </div>
+                            <input id="anchor-used-input" type="number" min="0" oninput="updateAnchorData('usedCount', parseInt(this.value) || 0)" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm font-mono text-amber-300 focus:outline-none focus:border-amber-500">
                         </div>
                         <div>
-                            <label class="text-xs text-slate-400 block mb-1">讀檔使用次數上限（創作者自訂）</label>
-                            <input id="anchor-max-input" type="number" min="1" onchange="updateAnchorData('maxLimit', parseInt(this.value)||1)" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm font-mono text-slate-100 focus:outline-none focus:border-amber-500">
+                            <label class="text-xs text-slate-400 block mb-1">讀檔使用上限（創作者自訂）</label>
+                            <input id="anchor-max-input" type="number" min="1" oninput="updateAnchorData('maxLimit', Math.max(1, parseInt(this.value) || 1))" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm font-mono text-rose-300 focus:outline-none focus:border-amber-500">
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-atelier-border">
-                        <label class="flex items-center gap-2.5 cursor-pointer">
-                            <input id="anchor-valid-checkbox" type="checkbox" onchange="updateAnchorData('isValid', this.checked)" class="w-4 h-4 accent-amber-500 rounded">
-                            <span class="text-sm text-slate-200">標的物完好（印記有效）</span>
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+                        <label class="flex items-center gap-2 text-xs sm:text-sm text-slate-200 cursor-pointer">
+                            <input id="anchor-valid-checkbox" type="checkbox" onchange="updateAnchorData('isValid', this.checked)" class="accent-emerald-500 w-4 h-4">
+                            標的物完好無損（取消勾選模擬標的物被破壞導致印記失效）
                         </label>
-                        <button onclick="recordNewAnchorOverwrite()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-atelier-border text-xs text-slate-200">
-                            記錄新的印記覆蓋
-                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="recordNewAnchorOverwrite()" class="px-3 py-2 rounded-xl bg-atelier-card hover:bg-slate-700 border border-atelier-border text-xs font-medium text-slate-200 transition">
+                                覆蓋新印記
+                            </button>
+                            <button onclick="triggerAnchorLoadTest()" class="px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-xs font-bold text-rose-300 transition">
+                                模擬發動［讀檔］
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="space-y-2">
-                        <div class="text-xs font-bold text-slate-400">印記覆蓋與強制重置歷史紀錄</div>
-                        <div id="anchor-logs-list" class="bg-atelier-bg border border-atelier-border rounded-xl p-3 max-h-48 overflow-y-auto space-y-2 text-xs text-slate-300 font-mono"></div>
+                    <div class="bg-atelier-bg border border-atelier-border rounded-xl p-3.5 space-y-1.5">
+                        <div class="text-[11px] font-bold text-slate-400">印記覆蓋與讀檔使用日誌</div>
+                        <div id="anchor-logs-list" class="text-xs font-mono text-slate-300 space-y-1 max-h-36 overflow-y-auto"></div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 5. 備份與專案管理分頁 -->
+        <!-- 5. 跨裝置同步代碼與備份管理分頁 -->
         <section id="view-backup" class="tab-view hidden p-4 sm:p-6 md:p-8 max-w-4xl mx-auto space-y-6">
+            <!-- 跨裝置同步代碼區塊 -->
+            <div class="bg-atelier-surface border border-amber-500/40 rounded-2xl p-5 sm:p-6 space-y-5 shadow-xl">
+                <div class="flex flex-wrap items-start justify-between gap-2 border-b border-atelier-border pb-4">
+                    <div>
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 mb-1.5">
+                            免帳號・高倍率壓縮傳輸
+                        </div>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-100">跨裝置同步代碼（手機 ↔ 電腦）</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">將所有專案、長篇正文、角色頭像與自訂關係圖壓縮為一段同步碼，透過 LINE 或備忘錄傳送即可跨裝置接續創作</p>
+                    </div>
+                    <button id="btn-rollback-snapshot" onclick="rollbackPreOverwriteSnapshot()" class="hidden px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/40 text-xs font-bold transition">
+                        ↺ 復原覆蓋前的進度
+                    </button>
+                </div>
+
+                <!-- 產生並複製同步代碼 -->
+                <div class="bg-atelier-bg border border-atelier-border rounded-xl p-4 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <div class="text-sm font-bold text-amber-300">步驟 1：匯出目前裝置的同步代碼</div>
+                            <div id="sync-code-size-hint" class="text-[11px] text-slate-400 mt-0.5">點擊下方按鈕將自動壓縮並複製到剪貼簿</div>
+                        </div>
+                        <button onclick="generateAndCopySyncCode()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition active:scale-95">
+                            📋 產生並複製同步代碼
+                        </button>
+                    </div>
+                    <textarea id="sync-code-export-box" readonly rows="2" onclick="this.select()" class="w-full bg-atelier-surface border border-atelier-border rounded-lg p-2.5 text-[11px] font-mono text-slate-400 focus:outline-none resize-none" placeholder="產生的 SA1:... 同步代碼會顯示於此..."></textarea>
+                </div>
+
+                <!-- 貼上同步代碼還原 -->
+                <div class="bg-atelier-bg border border-atelier-border rounded-xl p-4 space-y-3">
+                    <div>
+                        <div class="text-sm font-bold text-indigo-300">步驟 2：貼上其他裝置的同步代碼還原</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">貼上後系統會先顯示內容摘要供你核對，確認無誤再覆蓋（覆蓋前會自動建立安全快照）</div>
+                    </div>
+                    <textarea id="sync-code-import-box" oninput="previewSyncCodeInput(this.value)" rows="3" class="w-full bg-atelier-surface border border-atelier-border rounded-lg p-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500" placeholder="在此貼上 SA1:... 或 SA0:... 開頭的同步代碼..."></textarea>
+
+                    <!-- 即時解析摘要預覽面板 -->
+                    <div id="sync-preview-panel" class="hidden p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-indigo-300">✓ 同步代碼解析成功（待確認還原）</span>
+                            <span id="sync-preview-time" class="text-[11px] font-mono text-slate-400"></span>
+                        </div>
+                        <div id="sync-preview-stats" class="text-xs text-slate-200 leading-relaxed"></div>
+                        <div class="flex justify-end pt-1">
+                            <button onclick="applyImportedSyncCode()" class="px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs shadow-lg transition active:scale-95">
+                                確認還原至此裝置
+                            </button>
+                        </div>
+                    </div>
+                    <div id="sync-preview-error" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/30 px-3 py-2 rounded-lg"></div>
+                </div>
+            </div>
+
+            <!-- 作品專案清單 -->
             <div class="bg-atelier-surface border border-atelier-border rounded-2xl p-5 sm:p-6 space-y-4">
                 <div class="flex items-center justify-between">
                     <div>
@@ -458,21 +518,22 @@
                 <div id="project-manager-list" class="space-y-2.5"></div>
             </div>
 
+            <!-- 傳統 JSON 檔案備份 -->
             <div class="bg-atelier-surface border border-atelier-border rounded-2xl p-5 sm:p-6 space-y-4">
                 <div>
-                    <h2 class="text-base sm:text-lg font-bold text-slate-100">本機自動儲存與 JSON 備份還原</h2>
-                    <p class="text-xs text-slate-400 mt-0.5">所有文字、頭像圖片、關係圖座標與設定皆會自動保存於瀏覽器；建議定期匯出 JSON 備份</p>
+                    <h2 class="text-base sm:text-lg font-bold text-slate-100">本機自動儲存與 JSON 檔案備份</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">除了同步代碼外，也可將資料下載為實體 .json 檔案長期保存於電腦或雲端硬碟</p>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                     <button onclick="exportAllDataJSON()" class="flex flex-col items-start p-4 rounded-xl bg-atelier-card hover:bg-slate-800 border border-atelier-border transition text-left">
-                        <span class="text-sm font-bold text-emerald-400">⬇ 匯出完整工作台備份 (.json)</span>
+                        <span class="text-sm font-bold text-emerald-400">⬇ 下載實體備份檔 (.json)</span>
                         <span class="text-xs text-slate-400 mt-1">包含所有作品專案、劇情正文、頭像與自訂關係圖</span>
                     </button>
 
                     <label class="flex flex-col items-start p-4 rounded-xl bg-atelier-card hover:bg-slate-800 border border-atelier-border transition text-left cursor-pointer">
-                        <span class="text-sm font-bold text-amber-400">⬆ 匯入 JSON 備份還原</span>
-                        <span class="text-xs text-slate-400 mt-1">選擇先前匯出的 .json 備份檔進行還原</span>
+                        <span class="text-sm font-bold text-amber-400">⬆ 從實體 .json 檔案還原</span>
+                        <span class="text-xs text-slate-400 mt-1">選擇先前下載的 .json 備份檔進行還原</span>
                         <input type="file" accept=".json" onchange="importDataJSON(event)" class="hidden">
                     </label>
                 </div>
@@ -507,7 +568,7 @@
         </button>
         <button onclick="switchTab('backup')" data-nav="backup" class="nav-btn flex-1 flex flex-col items-center py-1.5 rounded-xl text-[11px] font-medium">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-            <span>備份</span>
+            <span>同步備份</span>
         </button>
     </nav>
 
@@ -517,8 +578,11 @@
             <button onclick="closePlotEditor()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-atelier-card hover:bg-slate-700 text-xs sm:text-sm font-medium text-slate-200">
                 ← 返回工作台
             </button>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 sm:gap-3">
                 <span id="editor-word-count" class="text-xs font-mono text-slate-400">0 字</span>
+                <button onclick="playFromCurrentEditorNode()" class="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
+                    ▶ 從此幕試玩
+                </button>
                 <button onclick="deleteCurrentPlotNode()" class="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-xs font-medium">
                     刪除節點
                 </button>
@@ -577,11 +641,35 @@
                         <span class="text-[11px] text-slate-400">即時自動儲存</span>
                     </div>
                     <textarea id="edit-node-content" oninput="autoSaveCurrentNode()" rows="18" class="w-full bg-atelier-surface border border-atelier-border rounded-2xl p-4 sm:p-6 text-base sm:text-lg text-slate-100 manuscript-editor focus:outline-none focus:border-amber-500 resize-y"></textarea>
+                    <p class="text-[11px] text-slate-400">💡 演出指令提示：在正文獨立一行輸入 <code class="text-amber-300">[角色名:差分名稱]</code> 可在試玩時切換立繪差分；輸入 <code class="text-slate-300">[退場:角色名]</code> 或 <code class="text-slate-300">[清空立繪]</code> 可讓角色退場。</p>
                 </div>
 
                 <div class="bg-atelier-surface border border-atelier-border p-4 rounded-2xl space-y-2">
                     <label class="text-xs font-bold text-slate-300 block">後續連接節點（支援多條分支與重新匯合）</label>
                     <div id="edit-node-next-selector" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+                </div>
+
+                <!-- 視覺小說演出腳本編輯器（精準指定逐句說話者、差分與演出指令） -->
+                <div class="bg-atelier-surface border border-emerald-500/35 p-4 sm:p-5 rounded-2xl space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-atelier-border pb-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-emerald-300 flex items-center gap-2">
+                                <span>🎬 視覺小說演出腳本編輯器（精準指定說話者）</span>
+                                <span id="vn-script-count-badge" class="px-2 py-0.5 rounded-full bg-emerald-500/15 text-[11px] font-mono">0 句</span>
+                            </h3>
+                            <p class="text-[11px] text-slate-400 mt-0.5">建立逐句演出後，試玩模擬器將優先依此精準播放，不再自動猜測說話者</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" onclick="importProseToVNScript()" class="px-3 py-1.5 rounded-xl bg-atelier-card hover:bg-slate-700 border border-atelier-border text-xs font-medium text-amber-300 transition">
+                                🪄 從上方正文一鍵拆句匯入
+                            </button>
+                            <button type="button" onclick="addVNScriptLine()" class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition">
+                                + 新增一句台詞
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="vn-script-lines-container" class="space-y-2.5 max-h-[460px] overflow-y-auto pr-1"></div>
                 </div>
 
                 <div>
@@ -671,6 +759,21 @@
                 <div>
                     <label class="text-[11px] text-slate-400 block mb-1">背景故事與人物經歷</label>
                     <textarea id="edit-char-backstory" oninput="autoSaveCurrentChar()" rows="5" class="w-full bg-atelier-surface border border-atelier-border rounded-xl p-4 text-sm text-slate-200 manuscript-editor focus:outline-none focus:border-indigo-500"></textarea>
+                </div>
+
+                <!-- 視覺小說立繪差分管理 -->
+                <div class="bg-atelier-surface border border-amber-500/30 rounded-2xl p-4 sm:p-5 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-sm font-bold text-amber-300">立繪差分圖庫（選配・用於試玩舞台演出）</h3>
+                            <p class="text-[11px] text-slate-400 mt-0.5">未設定立繪差分時，試玩畫面將保持純文字對話舞台（不會顯示圓形頭像）</p>
+                        </div>
+                        <label class="cursor-pointer px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition">
+                            + 上傳差分立繪
+                            <input type="file" accept="image/*" onchange="handleSpriteUpload(event)" class="hidden">
+                        </label>
+                    </div>
+                    <div id="edit-char-sprites-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
                 </div>
 
                 <!-- 反向查詢：出場劇情 -->
@@ -841,22 +944,19 @@
                 <button onclick="closeLoopModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
             </div>
             <div class="space-y-3">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-xs text-slate-400 block mb-1">輪迴編號</label>
-                        <input id="loop-number" type="text" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-sm text-slate-100">
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-400 block mb-1">終結方式</label>
-                        <select id="loop-end-type" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-sm text-slate-200">
-                            <option value="正常輪迴結束">正常輪迴結束</option>
-                            <option value="能力過度使用強制重置">能力過度使用強制重置</option>
-                            <option value="進行中">進行中</option>
-                        </select>
-                    </div>
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">輪迴編號</label>
+                    <input id="loop-number" type="text" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-sm text-slate-100">
                 </div>
                 <div>
-                    <label class="text-xs text-slate-400 block mb-1">本輪結局 / 關鍵事件摘要</label>
+                    <label class="text-xs text-slate-400 block mb-1">結束事件性質（嚴格區分）</label>
+                    <select id="loop-end-type" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3 py-2 text-sm text-slate-200">
+                        <option value="正常輪迴結束">正常輪迴結束（進入記憶保留整理）</option>
+                        <option value="能力過度使用強制重置">能力過度使用強制重置（直接回到起始日）</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">本輪經歷摘要與結局</label>
                     <textarea id="loop-summary" rows="3" class="w-full bg-atelier-bg border border-atelier-border rounded-xl p-3 text-sm text-slate-200"></textarea>
                 </div>
             </div>
@@ -867,23 +967,73 @@
         </div>
     </div>
 
-    <!-- ================= 新建作品專案 Modal ================= -->
+    <!-- ================= 新建專案 Modal ================= -->
     <div id="new-project-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-atelier-surface border border-atelier-border rounded-2xl w-full max-w-md p-5 sm:p-6 space-y-4">
-            <h3 class="font-bold text-base text-slate-100">建立新創作專案</h3>
+            <h3 class="font-bold text-base text-amber-300">在 Story Atelier 建立新作品專案</h3>
             <div class="space-y-3">
                 <div>
-                    <label class="text-xs text-slate-400 block mb-1">作品專案名稱</label>
-                    <input id="new-proj-title" type="text" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-slate-100" placeholder="輸入新視覺小說專案名稱...">
+                    <label class="text-xs text-slate-400 block mb-1">作品名稱</label>
+                    <input id="new-proj-title" type="text" placeholder="輸入你的新作品名稱..." class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-slate-100">
                 </div>
                 <div>
-                    <label class="text-xs text-slate-400 block mb-1">副標題 / 核心標語</label>
-                    <input id="new-proj-subtitle" type="text" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-slate-300" placeholder="選填...">
+                    <label class="text-xs text-slate-400 block mb-1">副標題 / 一句話核心概念</label>
+                    <input id="new-proj-subtitle" type="text" class="w-full bg-atelier-bg border border-atelier-border rounded-xl px-3.5 py-2 text-sm text-slate-200">
                 </div>
             </div>
-            <div class="flex justify-end gap-2 pt-3 border-t border-atelier-border">
+            <div class="flex justify-end gap-2 pt-2">
                 <button onclick="closeNewProjectModal()" class="px-4 py-2 rounded-xl bg-atelier-card text-xs text-slate-300">取消</button>
                 <button onclick="confirmCreateProject()" class="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs">建立專案</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 視覺小說即時試玩模擬器 Modal ================= -->
+    <div id="vn-player-modal" class="hidden fixed inset-0 z-50 bg-[#070912] flex flex-col justify-between select-none">
+        <!-- 頂部狀態列 -->
+        <div class="relative z-20 bg-atelier-surface/90 backdrop-blur border-b border-atelier-border px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold flex-shrink-0">VN 試玩模擬</span>
+                <span id="vn-player-node-title" class="text-xs sm:text-sm font-bold text-slate-100 truncate">節點標題</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <select id="vn-player-jump-select" onchange="vnJumpToNode(this.value)" class="max-w-[140px] sm:max-w-[200px] bg-atelier-bg border border-atelier-border rounded-lg px-2 py-1 text-xs text-amber-300 focus:outline-none"></select>
+                <button onclick="vnRestartCurrentNode()" class="px-2.5 py-1 rounded-lg bg-atelier-card hover:bg-slate-700 text-xs text-slate-200">重播本幕</button>
+                <button onclick="closeVNPlayer()" class="px-3 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold">結束試玩 ✕</button>
+            </div>
+        </div>
+
+        <!-- 舞台畫面區（場景資訊 + 選配立繪差分舞台 + 分支選項浮層） -->
+        <div id="vn-player-stage" onclick="vnAdvanceStep()" class="relative flex-1 flex flex-col items-center justify-end p-4 sm:p-8 overflow-hidden cursor-pointer bg-gradient-to-b from-[#0b0f1d] via-[#101629] to-[#080a12] transition-all">
+            <!-- 場景標籤 -->
+            <div id="vn-player-scene-badge" class="absolute top-4 left-4 z-20 px-3 py-1 rounded-full bg-black/50 border border-white/10 text-xs text-slate-300">
+                📍 場景
+            </div>
+
+            <!-- 選配角色立繪差分舞台列（僅在角色有上傳立繪差分時才顯示，絕不顯示大頭貼） -->
+            <div id="vn-player-cast-row" class="w-full max-w-5xl h-full flex items-end justify-center gap-2 sm:gap-8 pointer-events-none transition-all"></div>
+
+            <!-- 分支選項浮層 -->
+            <div id="vn-player-choices-overlay" onclick="event.stopPropagation()" class="hidden absolute inset-0 z-30 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center p-4">
+                <div class="text-xs tracking-[0.25em] text-amber-400 font-bold mb-4">── 選擇後續分支路線 ──</div>
+                <div id="vn-player-choices-list" class="w-full max-w-lg space-y-2.5"></div>
+            </div>
+        </div>
+
+        <!-- 底部視覺小說對話框 -->
+        <div onclick="vnAdvanceStep()" class="relative z-20 p-3 sm:p-6 bg-gradient-to-t from-black via-[#090c16] to-transparent cursor-pointer">
+            <div class="max-w-4xl mx-auto bg-atelier-surface/95 border border-amber-500/40 rounded-2xl p-4 sm:p-6 shadow-2xl min-h-[150px] sm:min-h-[175px] flex flex-col justify-between">
+                <div class="flex items-center justify-between gap-2 mb-2">
+                    <span id="vn-player-speaker" class="px-3 py-0.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs sm:text-sm font-bold">
+                        旁白
+                    </span>
+                    <span id="vn-player-progress" class="text-[11px] font-mono text-slate-400">1 / 1</span>
+                </div>
+                <div id="vn-player-dialogue" class="text-sm sm:text-lg text-slate-100 manuscript-editor leading-relaxed min-h-[68px]"></div>
+                <div class="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-atelier-border/60">
+                    <span>點擊畫面或對話框推進（支援空白鍵 / Enter）</span>
+                    <span class="text-amber-400 animate-bounce">▼</span>
+                </div>
             </div>
         </div>
     </div>
@@ -1534,7 +1684,12 @@
                     <p class="text-xs sm:text-sm text-slate-300/90 line-clamp-2 leading-relaxed mb-3">${escapeHTML(node.summary || node.content.slice(0, 100) || '（尚未撰寫內容）')}</p>
                     <div class="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-atelier-border/70">
                         <div class="flex flex-wrap gap-1.5">${charBadges || '<span class="text-[11px] text-slate-500">無指定出場角色</span>'}</div>
-                        ${nextNames ? `<div class="text-[11px] text-amber-400/90">後續 → ${nextNames}</div>` : ''}
+                        <div class="flex items-center gap-3">
+                            ${nextNames ? `<span class="text-[11px] text-amber-400/90">後續 → ${nextNames}</span>` : ''}
+                            <button onclick="event.stopPropagation(); openVNPlayer('${node.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold transition">
+                                ▶ 試玩此幕
+                            </button>
+                        </div>
                     </div>
                 </div>`;
             }).join('');
@@ -2124,7 +2279,193 @@
                     </label>`;
                 }).join('');
 
+            renderVNScriptEditor();
             document.getElementById('plot-editor-modal').classList.remove('hidden');
+        }
+
+        function renderVNScriptEditor() {
+            const proj = getActiveProject();
+            const node = proj.nodes.find(n => n.id === editingNodeId);
+            const container = document.getElementById('vn-script-lines-container');
+            const badge = document.getElementById('vn-script-count-badge');
+            if (!node || !container) return;
+
+            const lines = Array.isArray(node.vnScript) ? node.vnScript : [];
+            badge.textContent = `${lines.length} 句`;
+
+            if (lines.length === 0) {
+                container.innerHTML = `<div class="text-center py-6 rounded-xl bg-atelier-bg/70 border border-dashed border-atelier-border text-xs text-slate-500">尚未建立逐句演出腳本（目前試玩會自動拆解上方正文；點擊「🪄 從上方正文一鍵拆句匯入」即可逐句校對說話者）</div>`;
+                return;
+            }
+
+            container.innerHTML = lines.map((item, idx) => {
+                const speakerOptions = [
+                    `<option value="NARRATOR" ${item.speakerType === 'NARRATOR' ? 'selected' : ''}>旁白 / 心理描寫</option>`,
+                    `<option value="CUSTOM" ${item.speakerType === 'CUSTOM' ? 'selected' : ''}>自訂名稱（如：？？？ / 眾人）</option>`,
+                    ...proj.characters.map(c =>
+                        `<option value="${c.id}" ${item.speakerType === 'CHAR' && item.charId === c.id ? 'selected' : ''}>${escapeHTML(getCharacterDisplayName(c))}</option>`
+                    )
+                ].join('');
+
+                // 若選定特定角色且該角色有上傳立繪差分，顯示差分下拉選單
+                const selectedChar = item.speakerType === 'CHAR' ? proj.characters.find(c => c.id === item.charId) : null;
+                const charSprites = (selectedChar && Array.isArray(selectedChar.sprites)) ? selectedChar.sprites : [];
+                const spriteSelectHTML = charSprites.length > 0
+                    ? `<select onchange="updateVNScriptLine(${idx}, 'spriteName', this.value)" class="bg-atelier-surface border border-amber-500/40 rounded-lg px-2 py-1 text-xs text-amber-300 focus:outline-none">
+                        <option value="">保持目前立繪</option>
+                        ${charSprites.map(s => `<option value="${escapeHTML(s.name)}" ${item.spriteName === s.name ? 'selected' : ''}>立繪：${escapeHTML(s.name)}</option>`).join('')}
+                        <option value="__HIDE__" ${item.spriteName === '__HIDE__' ? 'selected' : ''}>角色退場</option>
+                       </select>`
+                    : '';
+
+                return `
+                <div class="bg-atelier-bg border border-atelier-border rounded-xl p-3 space-y-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-[11px] font-mono text-slate-500 w-6">#${idx + 1}</span>
+                        <select onchange="changeVNScriptSpeaker(${idx}, this.value)" class="bg-atelier-surface border border-atelier-border rounded-lg px-2.5 py-1 text-xs font-bold text-slate-100 focus:outline-none focus:border-emerald-500">
+                            ${speakerOptions}
+                        </select>
+                        ${item.speakerType === 'CUSTOM' ? `
+                            <input type="text" value="${escapeHTML(item.customSpeaker || '')}" oninput="updateVNScriptLine(${idx}, 'customSpeaker', this.value)" placeholder="輸入顯示名牌（如：黑髮少年）" class="w-36 bg-atelier-surface border border-atelier-border rounded-lg px-2.5 py-1 text-xs text-amber-300 focus:outline-none">
+                        ` : ''}
+                        ${spriteSelectHTML}
+                        <select onchange="updateVNScriptLine(${idx}, 'fx', this.value)" class="bg-atelier-surface border border-atelier-border rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none">
+                            <option value="" ${!item.fx ? 'selected' : ''}>無特殊演出</option>
+                            <option value="flash_red" ${item.fx === 'flash_red' ? 'selected' : ''}>特效：血紅閃光</option>
+                            <option value="flash_white" ${item.fx === 'flash_white' ? 'selected' : ''}>特效：白光閃爍</option>
+                            <option value="shake" ${item.fx === 'shake' ? 'selected' : ''}>特效：畫面震動</option>
+                        </select>
+                        <div class="ml-auto flex items-center gap-1">
+                            <button type="button" onclick="moveVNScriptLine(${idx}, -1)" class="px-1.5 py-0.5 rounded bg-atelier-surface hover:bg-slate-700 text-[11px] text-slate-400" title="上移">↑</button>
+                            <button type="button" onclick="moveVNScriptLine(${idx}, 1)" class="px-1.5 py-0.5 rounded bg-atelier-surface hover:bg-slate-700 text-[11px] text-slate-400" title="下移">↓</button>
+                            <button type="button" onclick="addVNScriptLine(${idx + 1})" class="px-1.5 py-0.5 rounded bg-atelier-surface hover:bg-emerald-500/20 text-[11px] text-emerald-400" title="在下方插入一句">＋</button>
+                            <button type="button" onclick="deleteVNScriptLine(${idx})" class="px-1.5 py-0.5 rounded bg-atelier-surface hover:bg-rose-500/20 text-[11px] text-rose-400" title="刪除此句">✕</button>
+                        </div>
+                    </div>
+                    <textarea rows="2" oninput="updateVNScriptLine(${idx}, 'text', this.value)" class="w-full bg-atelier-surface/80 border border-atelier-border rounded-lg px-3 py-2 text-xs sm:text-sm text-slate-100 manuscript-editor focus:outline-none focus:border-emerald-500 resize-y" placeholder="輸入這一句的對白或旁白內容...">${escapeHTML(item.text || '')}</textarea>
+                </div>`;
+            }).join('');
+        }
+
+        function addVNScriptLine(insertAt = null) {
+            const proj = getActiveProject();
+            const node = proj.nodes.find(n => n.id === editingNodeId);
+            if (!node) return;
+            if (!Array.isArray(node.vnScript)) node.vnScript = [];
+
+            const defaultCharId = (node.characters && node.characters[0]) || '';
+            const newLine = defaultCharId
+                ? { speakerType: 'CHAR', charId: defaultCharId, customSpeaker: '', spriteName: '', fx: '', text: '' }
+                : { speakerType: 'NARRATOR', charId: '', customSpeaker: '', spriteName: '', fx: '', text: '' };
+
+            if (typeof insertAt === 'number') node.vnScript.splice(insertAt, 0, newLine);
+            else node.vnScript.push(newLine);
+
+            saveStateToStorage();
+            renderVNScriptEditor();
+        }
+
+        function changeVNScriptSpeaker(idx, val) {
+            const proj = getActiveProject();
+            const node = proj.nodes.find(n => n.id === editingNodeId);
+            if (!node || !node.vnScript[idx]) return;
+            const line = node.vnScript[idx];
+            if (val === 'NARRATOR') {
+                line.speakerType = 'NARRATOR';
+                line.charId = '';
+                line.spriteName = '';
+            } else if (val === 'CUSTOM') {
+                line.speakerType = 'CUSTOM';
+                line.charId = '';
+                line.spriteName = '';
+            } else {
+                line.speakerType = 'CHAR';
+                line.charId = val;
+                line.spriteName = '';
+            }
+            saveStateToStorage();
+            renderVNScriptEditor();
+        }
+
+        function updateVNScriptLine(idx, field, val) {
+            const proj = getActiveProject();
+            const node = proj.nodes.find(n => n.id === editingNodeId);
+            if (!node || !node.vnScript[idx]) return;
+            node.vnScript[idx][field] = val;
+            saveStateToStorage();
+        }
+
+        function moveVNScriptLine(idx, dir) {
+            const proj = getActiveProject();
+            const node = proj.nodes.find(n => n.id === editingNodeId);
+            if (!node || !Array.isArray(node.vnScript)) return;
+            const target = idx + dir;
+            if (target < 0 || target >= node.vnScript.length) return;
+            const tmp = node.vnScript[idx];
+            node.vnScript[idx] = node.vnScript[target];
+            node.vnScript[target] = tmp;
+            saveStateToStorage();
+            renderVNScriptEditor();
+        }
+
+        function deleteVNScriptLine(idx) {
+            const proj = getActiveProject();
+            const node = proj.nodes.find(n => n.id === editingNodeId);
+            if (!node || !Array.isArray(node.vnScript)) return;
+            node.vnScript.splice(idx, 1);
+            saveStateToStorage();
+            renderVNScriptEditor();
+        }
+
+        function importProseToVNScript() {
+            const proj = getActiveProject();
+            const node = proj.nodes.find(n => n.id === editingNodeId);
+            if (!node) return;
+            const rawText = (node.content || '').trim();
+            if (!rawText) {
+                showToast('上方劇情正文目前是空的');
+                return;
+            }
+            const castChars = (node.characters || [])
+                .map(cid => proj.characters.find(c => c.id === cid))
+                .filter(Boolean);
+
+            const paragraphs = rawText.split(/\n+/).map(p => p.trim()).filter(Boolean);
+            node.vnScript = paragraphs.map(p => {
+                const detected = detectSpeakerFromLine(p, castChars, proj.characters);
+                if (detected.charId) {
+                    return {
+                        speakerType: 'CHAR',
+                        charId: detected.charId,
+                        customSpeaker: '',
+                        spriteName: '',
+                        fx: '',
+                        text: detected.text
+                    };
+                }
+                if (detected.speaker && detected.speaker !== '旁白' && detected.speaker !== '角色台詞') {
+                    return {
+                        speakerType: 'CUSTOM',
+                        charId: '',
+                        customSpeaker: detected.speaker,
+                        spriteName: '',
+                        fx: '',
+                        text: detected.text
+                    };
+                }
+                return {
+                    speakerType: 'NARRATOR',
+                    charId: '',
+                    customSpeaker: '',
+                    spriteName: '',
+                    fx: '',
+                    text: detected.text
+                };
+            });
+
+            saveStateToStorage();
+            renderVNScriptEditor();
+            showToast(`已將正文拆解為 ${node.vnScript.length} 句腳本，可逐句微調說話者！`);
         }
 
         function toggleNodeCharacter(charId) {
@@ -2212,6 +2553,7 @@
             editingCharId = charId;
 
             updateCharAvatarPreview(c);
+            renderCharSpritesGrid(c);
             document.getElementById('edit-char-name').value = c.name || '';
             document.getElementById('edit-char-title').value = c.title || '';
             document.getElementById('edit-char-faction').value = c.faction || '主角方';
@@ -2235,6 +2577,93 @@
                 `).join('');
 
             document.getElementById('char-editor-modal').classList.remove('hidden');
+        }
+
+        // 立繪差分上傳（等比例縮放保留透明背景，不裁成正方形頭像）
+        function handleSpriteUpload(event) {
+            const file = event.target.files[0];
+            if (!file || !editingCharId) return;
+
+            const proj = getActiveProject();
+            const charObj = proj.characters.find(c => c.id === editingCharId);
+            if (!charObj) return;
+            if (!Array.isArray(charObj.sprites)) charObj.sprites = [];
+
+            const defaultLabel = charObj.sprites.length === 0 ? '預設' : `差分${charObj.sprites.length + 1}`;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const MAX_H = 720;
+                    const scale = img.height > MAX_H ? (MAX_H / img.height) : 1;
+                    const w = Math.round(img.width * scale);
+                    const h = Math.round(img.height * scale);
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    // 使用 WebP/PNG 保留立繪透明背景
+                    const dataUrl = canvas.toDataURL('image/webp', 0.85);
+                    charObj.sprites.push({
+                        id: 'spr_' + Date.now(),
+                        name: defaultLabel,
+                        image: dataUrl
+                    });
+                    saveStateToStorage();
+                    renderCharSpritesGrid(charObj);
+                    showToast(`已新增立繪差分「${defaultLabel}」`);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function renameCharSprite(spriteId, newName) {
+            const proj = getActiveProject();
+            const charObj = proj.characters.find(c => c.id === editingCharId);
+            if (!charObj || !Array.isArray(charObj.sprites)) return;
+            const spr = charObj.sprites.find(s => s.id === spriteId);
+            if (spr) {
+                spr.name = newName.trim() || '預設';
+                saveStateToStorage();
+            }
+        }
+
+        function deleteCharSprite(spriteId) {
+            const proj = getActiveProject();
+            const charObj = proj.characters.find(c => c.id === editingCharId);
+            if (!charObj || !Array.isArray(charObj.sprites)) return;
+            charObj.sprites = charObj.sprites.filter(s => s.id !== spriteId);
+            saveStateToStorage();
+            renderCharSpritesGrid(charObj);
+            showToast('已刪除該立繪差分');
+        }
+
+        function renderCharSpritesGrid(charObj) {
+            const grid = document.getElementById('edit-char-sprites-grid');
+            if (!grid) return;
+            const sprites = Array.isArray(charObj.sprites) ? charObj.sprites : [];
+            if (sprites.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-5 rounded-xl bg-atelier-bg/70 border border-dashed border-atelier-border text-xs text-slate-500">尚未上傳任何立繪差分（試玩時將維持純對話舞台，不會顯示頭像）</div>`;
+                return;
+            }
+            const dName = getCharacterDisplayName(charObj).replace(/[『』]/g, '');
+            grid.innerHTML = sprites.map(s => `
+                <div class="bg-atelier-bg border border-atelier-border rounded-xl p-2.5 flex flex-col gap-2">
+                    <div class="h-36 rounded-lg bg-[#090b10] flex items-end justify-center overflow-hidden relative">
+                        <img src="${s.image}" class="max-h-full max-w-full object-contain">
+                        <button type="button" onclick="deleteCharSprite('${s.id}')" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-md bg-black/75 hover:bg-rose-500 text-slate-300 hover:text-white text-xs">✕</button>
+                    </div>
+                    <div>
+                        <input type="text" value="${escapeHTML(s.name)}" onchange="renameCharSprite('${s.id}', this.value)" class="w-full bg-atelier-surface border border-atelier-border rounded-lg px-2 py-1 text-xs font-bold text-amber-300 text-center focus:outline-none focus:border-amber-500" placeholder="差分名稱">
+                        <div class="text-[10px] font-mono text-slate-500 text-center mt-1">[${escapeHTML(dName)}:${escapeHTML(s.name)}]</div>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function autoSaveCurrentChar() {
@@ -2581,10 +3010,11 @@
                 try {
                     const imported = JSON.parse(e.target.result);
                     if (imported && Array.isArray(imported.projects) && imported.projects.length > 0) {
+                        savePreOverwriteSnapshot();
                         appState = imported;
                         saveStateToStorage();
                         refreshAllViews();
-                        showToast('JSON 備份還原成功！');
+                        showToast('JSON 備份還原成功！（已保留覆蓋前快照）');
                     } else {
                         showToast('檔案格式不正確');
                     }
@@ -2597,15 +3027,528 @@
         }
 
         function resetToDefaultDemo() {
+            savePreOverwriteSnapshot();
             appState = createDefaultSeedData();
             saveStateToStorage();
             refreshAllViews();
             showToast('已還原預設範例資料');
         }
 
+        /**
+         * ============================================================================
+         * 10. 跨裝置同步代碼系統（Deflate 原生壓縮 + Base64 + 摘要預覽 + 快照復原）
+         * ============================================================================
+         */
+        const SNAPSHOT_KEY = 'story_atelier_pre_overwrite_snapshot_v1';
+        let parsedSyncCandidate = null;
+
+        function uint8ToBase64(bytes) {
+            let binary = '';
+            const chunkSize = 0x8000;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+            }
+            return btoa(binary);
+        }
+
+        function base64ToUint8(b64) {
+            const binary = atob(b64);
+            const len = binary.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        async function compressStateToSyncCode(stateObj) {
+            const wrapper = {
+                exportedAt: new Date().toLocaleString('zh-TW', { hour12: false }),
+                state: stateObj
+            };
+            const jsonStr = JSON.stringify(wrapper);
+            const rawBytes = new TextEncoder().encode(jsonStr);
+
+            if (typeof CompressionStream !== 'undefined') {
+                const cs = new CompressionStream('deflate-raw');
+                const writer = cs.writable.getWriter();
+                writer.write(rawBytes);
+                writer.close();
+                const compressedBuf = await new Response(cs.readable).arrayBuffer();
+                return 'SA1:' + uint8ToBase64(new Uint8Array(compressedBuf));
+            }
+            return 'SA0:' + uint8ToBase64(rawBytes);
+        }
+
+        async function decompressSyncCode(codeStr) {
+            const trimmed = codeStr.trim();
+            if (trimmed.startsWith('SA1:')) {
+                if (typeof DecompressionStream === 'undefined') {
+                    throw new Error('目前瀏覽器不支援 SA1 解壓縮格式');
+                }
+                const compressedBytes = base64ToUint8(trimmed.slice(4));
+                const ds = new DecompressionStream('deflate-raw');
+                const writer = ds.writable.getWriter();
+                writer.write(compressedBytes);
+                writer.close();
+                const decompressedBuf = await new Response(ds.readable).arrayBuffer();
+                const jsonStr = new TextDecoder().decode(decompressedBuf);
+                return JSON.parse(jsonStr);
+            } else if (trimmed.startsWith('SA0:')) {
+                const rawBytes = base64ToUint8(trimmed.slice(4));
+                const jsonStr = new TextDecoder().decode(rawBytes);
+                return JSON.parse(jsonStr);
+            }
+            throw new Error('同步代碼格式不正確（必須以 SA1: 或 SA0: 開頭）');
+        }
+
+        async function generateAndCopySyncCode() {
+            try {
+                const code = await compressStateToSyncCode(appState);
+                const box = document.getElementById('sync-code-export-box');
+                const hint = document.getElementById('sync-code-size-hint');
+                box.value = code;
+                hint.textContent = `已產生同步代碼（總長度 ${code.length.toLocaleString()} 字元），可直接貼到 LINE 或備忘錄傳送`;
+
+                // 相容 iframe 與手機瀏覽器的剪貼簿複製
+                box.focus();
+                box.select();
+                let copied = false;
+                try {
+                    copied = document.execCommand('copy');
+                } catch (_) {}
+                if (!copied && navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(code);
+                    copied = true;
+                }
+                showToast(copied ? '已產生並複製同步代碼到剪貼簿！' : '同步代碼已產生，請長按代碼框全選複製');
+            } catch (err) {
+                console.error(err);
+                showToast('產生同步代碼失敗：' + err.message);
+            }
+        }
+
+        async function previewSyncCodeInput(rawValue) {
+            const previewPanel = document.getElementById('sync-preview-panel');
+            const errorBox = document.getElementById('sync-preview-error');
+            const statsEl = document.getElementById('sync-preview-stats');
+            const timeEl = document.getElementById('sync-preview-time');
+
+            parsedSyncCandidate = null;
+            previewPanel.classList.add('hidden');
+            errorBox.classList.add('hidden');
+
+            const trimmed = (rawValue || '').trim();
+            if (!trimmed) return;
+
+            try {
+                const decoded = await decompressSyncCode(trimmed);
+                const candidateState = decoded && decoded.state ? decoded.state : decoded;
+                if (!candidateState || !Array.isArray(candidateState.projects) || candidateState.projects.length === 0) {
+                    throw new Error('代碼中找不到有效的 Story Atelier 專案資料');
+                }
+
+                parsedSyncCandidate = candidateState;
+                const totalNodes = candidateState.projects.reduce((s, p) => s + (p.nodes ? p.nodes.length : 0), 0);
+                const totalChars = candidateState.projects.reduce((s, p) => s + (p.characters ? p.characters.length : 0), 0);
+                const projNames = candidateState.projects.map(p => `「${escapeHTML(p.title)}」`).join('、');
+
+                timeEl.textContent = decoded.exportedAt ? `匯出時間：${decoded.exportedAt}` : '';
+                statsEl.innerHTML = `包含 <strong>${candidateState.projects.length}</strong> 個作品專案（${projNames}），共 <strong>${totalNodes}</strong> 個劇情節點、<strong>${totalChars}</strong> 名角色。`;
+                previewPanel.classList.remove('hidden');
+            } catch (err) {
+                errorBox.textContent = `無法解析同步代碼：${err.message}`;
+                errorBox.classList.remove('hidden');
+            }
+        }
+
+        function savePreOverwriteSnapshot() {
+            try {
+                localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(appState));
+                updateRollbackButtonVisibility();
+            } catch (_) {}
+        }
+
+        function updateRollbackButtonVisibility() {
+            const btn = document.getElementById('btn-rollback-snapshot');
+            if (!btn) return;
+            const hasSnap = !!localStorage.getItem(SNAPSHOT_KEY);
+            if (hasSnap) btn.classList.remove('hidden');
+            else btn.classList.add('hidden');
+        }
+
+        function applyImportedSyncCode() {
+            if (!parsedSyncCandidate) return;
+            savePreOverwriteSnapshot();
+            parsedSyncCandidate.projects.forEach(p => {
+                if (!Array.isArray(p.relationships)) p.relationships = [];
+            });
+            appState = parsedSyncCandidate;
+            saveStateToStorage();
+            parsedSyncCandidate = null;
+            document.getElementById('sync-code-import-box').value = '';
+            document.getElementById('sync-preview-panel').classList.add('hidden');
+            refreshAllViews();
+            updateRollbackButtonVisibility();
+            showToast('跨裝置同步還原成功！（已自動保留覆蓋前快照）');
+        }
+
+        function rollbackPreOverwriteSnapshot() {
+            try {
+                const raw = localStorage.getItem(SNAPSHOT_KEY);
+                if (!raw) return showToast('沒有可復原的快照');
+                const snap = JSON.parse(raw);
+                if (snap && Array.isArray(snap.projects)) {
+                    appState = snap;
+                    saveStateToStorage();
+                    refreshAllViews();
+                    showToast('已復原至覆蓋前的進度！');
+                }
+            } catch (err) {
+                showToast('復原快照失敗');
+            }
+        }
+
+        /**
+         * ============================================================================
+         * 11. 視覺小說即時試玩模擬器引擎（自動拆句、辨識角色台詞、分支跳轉與記憶檢定）
+         * ============================================================================
+         */
+        let vnCurrentNodeId = null;
+        let vnLines = [];
+        let vnLineIdx = 0;
+        let vnIsTyping = false;
+        let vnTypeTimer = null;
+        let vnFullLineText = '';
+        let vnActiveSprites = {}; // { charId: { spriteName, image } }
+
+        function openVNPlayer(startNodeId = null) {
+            const proj = getActiveProject();
+            if (!proj.nodes || proj.nodes.length === 0) {
+                showToast('目前專案尚無任何劇情節點可供試玩');
+                return;
+            }
+            const targetId = startNodeId || proj.nodes[0].id;
+            const jumpSel = document.getElementById('vn-player-jump-select');
+            jumpSel.innerHTML = proj.nodes.map(n =>
+                `<option value="${n.id}">${escapeHTML(n.title || '未命名節點')}</option>`
+            ).join('');
+
+            document.getElementById('vn-player-modal').classList.remove('hidden');
+            vnLoadNode(targetId);
+        }
+
+        function playFromCurrentEditorNode() {
+            if (!editingNodeId) return;
+            const targetId = editingNodeId;
+            closePlotEditor();
+            openVNPlayer(targetId);
+        }
+
+        function closeVNPlayer() {
+            clearInterval(vnTypeTimer);
+            vnIsTyping = false;
+            document.getElementById('vn-player-modal').classList.add('hidden');
+        }
+
+        function vnJumpToNode(nodeId) {
+            if (!nodeId) return;
+            vnLoadNode(nodeId);
+        }
+
+        function vnRestartCurrentNode() {
+            if (!vnCurrentNodeId) return;
+            vnLoadNode(vnCurrentNodeId);
+        }
+
+        function vnLoadNode(nodeId) {
+            const proj = getActiveProject();
+            const node = proj.nodes.find(n => n.id === nodeId);
+            if (!node) return;
+
+            vnCurrentNodeId = nodeId;
+            document.getElementById('vn-player-choices-overlay').classList.add('hidden');
+            document.getElementById('vn-player-node-title').textContent = node.title || '未命名節點';
+            document.getElementById('vn-player-scene-badge').textContent = node.scene ? `📍 ${node.scene}` : '📍 未設定場景';
+
+            const jumpSel = document.getElementById('vn-player-jump-select');
+            if (jumpSel) jumpSel.value = nodeId;
+
+            const castChars = (node.characters || [])
+                .map(cid => proj.characters.find(c => c.id === cid))
+                .filter(Boolean);
+
+            // 初始化本幕出場角色預設立繪（僅有上傳立繪差分者才會進入舞台）
+            vnActiveSprites = {};
+            castChars.forEach(c => {
+                if (Array.isArray(c.sprites) && c.sprites.length > 0) {
+                    vnActiveSprites[c.id] = {
+                        charId: c.id,
+                        name: getCharacterDisplayName(c),
+                        spriteName: c.sprites[0].name,
+                        image: c.sprites[0].image
+                    };
+                }
+            });
+
+            // 解析劇本：若創作者已建立「視覺小說演出腳本 (vnScript)」，則 100% 精準使用該腳本；否則自動拆解正文
+            vnLines = [];
+            let stageSnapshot = JSON.parse(JSON.stringify(vnActiveSprites));
+
+            if (Array.isArray(node.vnScript) && node.vnScript.length > 0) {
+                node.vnScript.forEach(item => {
+                    let speakerLabel = '旁白';
+                    let activeCharId = null;
+
+                    if (item.speakerType === 'CHAR' && item.charId) {
+                        const c = proj.characters.find(x => x.id === item.charId);
+                        if (c) {
+                            speakerLabel = getCharacterDisplayName(c);
+                            activeCharId = c.id;
+                            if (item.spriteName === '__HIDE__') {
+                                delete stageSnapshot[c.id];
+                            } else if (item.spriteName && Array.isArray(c.sprites)) {
+                                const spr = c.sprites.find(s => s.name === item.spriteName);
+                                if (spr) {
+                                    stageSnapshot[c.id] = {
+                                        charId: c.id,
+                                        name: speakerLabel,
+                                        spriteName: spr.name,
+                                        image: spr.image
+                                    };
+                                }
+                            } else if (!stageSnapshot[c.id] && Array.isArray(c.sprites) && c.sprites.length > 0) {
+                                stageSnapshot[c.id] = {
+                                    charId: c.id,
+                                    name: speakerLabel,
+                                    spriteName: c.sprites[0].name,
+                                    image: c.sprites[0].image
+                                };
+                            }
+                        }
+                    } else if (item.speakerType === 'CUSTOM') {
+                        speakerLabel = (item.customSpeaker || '').trim() || '？？？';
+                    }
+
+                    vnLines.push({
+                        speaker: speakerLabel,
+                        charId: activeCharId,
+                        text: item.text || '',
+                        fx: item.fx || '',
+                        stageState: JSON.parse(JSON.stringify(stageSnapshot))
+                    });
+                });
+            } else {
+                const rawText = (node.content || '').trim();
+                const paragraphs = rawText
+                    ? rawText.split(/\n+/).map(p => p.trim()).filter(Boolean)
+                    : [node.summary || '（此節點尚未撰寫正文內容）'];
+
+                paragraphs.forEach(p => {
+                    if (/^\[清空立繪\]$/.test(p)) {
+                        stageSnapshot = {};
+                        return;
+                    }
+                    const exitMatch = p.match(/^\[退場[：:]([^\]]+)\]$/);
+                    if (exitMatch) {
+                        const targetName = exitMatch[1].trim();
+                        const found = proj.characters.find(c =>
+                            (c.name && targetName.includes(c.name)) || (c.title && targetName.includes(c.title))
+                        );
+                        if (found) delete stageSnapshot[found.id];
+                        return;
+                    }
+                    const sprMatch = p.match(/^\[([^：:\]]+)[：:]([^\]]+)\]$/);
+                    if (sprMatch) {
+                        const cName = sprMatch[1].trim();
+                        const sName = sprMatch[2].trim();
+                        const foundChar = proj.characters.find(c =>
+                            (c.name && cName.includes(c.name)) || (c.title && cName.includes(c.title))
+                        );
+                        if (foundChar && Array.isArray(foundChar.sprites) && foundChar.sprites.length > 0) {
+                            const foundSpr = foundChar.sprites.find(s => s.name === sName) || foundChar.sprites[0];
+                            stageSnapshot[foundChar.id] = {
+                                charId: foundChar.id,
+                                name: getCharacterDisplayName(foundChar),
+                                spriteName: foundSpr.name,
+                                image: foundSpr.image
+                            };
+                        }
+                        return;
+                    }
+
+                    const parsedLine = detectSpeakerFromLine(p, castChars, proj.characters);
+                    parsedLine.stageState = JSON.parse(JSON.stringify(stageSnapshot));
+                    vnLines.push(parsedLine);
+                });
+            }
+
+            if (vnLines.length === 0) {
+                vnLines.push({ speaker: '旁白', charId: null, text: '（此幕僅包含舞台指令）', stageState: stageSnapshot });
+            }
+
+            vnLineIdx = 0;
+            vnRenderCurrentLine();
+        }
+
+        function detectSpeakerFromLine(line, castChars, allChars) {
+            // 支援「角色名：台詞」或自動從引號台詞前後文推斷說話角色
+            const colonMatch = line.match(/^([^「『：:]{1,12})[：:](.+)$/);
+            if (colonMatch) {
+                const prefix = colonMatch[1].trim();
+                const matched = allChars.find(c =>
+                    (c.name && prefix.includes(c.name)) || (c.title && prefix.includes(c.title))
+                );
+                return {
+                    speaker: matched ? getCharacterDisplayName(matched) : prefix,
+                    charId: matched ? matched.id : null,
+                    text: colonMatch[2].trim()
+                };
+            }
+
+            if (line.startsWith('「') || line.startsWith('『')) {
+                // 若台詞內含稱呼某人，排除被稱呼者；否則匹配場上角色
+                const mentionedOther = allChars.find(c =>
+                    (c.name && line.slice(0, 8).includes(c.name)) || (c.title && line.slice(0, 8).includes(`『${c.title}』`))
+                );
+                const candidate = castChars.find(c => !mentionedOther || c.id !== mentionedOther.id) || castChars[0];
+                return {
+                    speaker: candidate ? getCharacterDisplayName(candidate) : '角色台詞',
+                    charId: candidate ? candidate.id : null,
+                    text: line
+                };
+            }
+
+            return { speaker: '旁白', charId: null, text: line };
+        }
+
+        function vnRenderCurrentLine() {
+            const lineObj = vnLines[vnLineIdx];
+            if (!lineObj) return;
+
+            document.getElementById('vn-player-speaker').textContent = lineObj.speaker;
+            document.getElementById('vn-player-progress').textContent = `${vnLineIdx + 1} / ${vnLines.length}`;
+
+            // 觸發單句特殊演出效果（血紅閃光 / 白光閃爍 / 畫面震動）
+            const stageEl = document.getElementById('vn-player-stage');
+            if (stageEl && lineObj.fx) {
+                if (lineObj.fx === 'flash_red') {
+                    stageEl.style.boxShadow = 'inset 0 0 120px rgba(244, 63, 94, 0.75)';
+                    setTimeout(() => { stageEl.style.boxShadow = ''; }, 450);
+                } else if (lineObj.fx === 'flash_white') {
+                    stageEl.style.filter = 'brightness(2.2)';
+                    setTimeout(() => { stageEl.style.filter = ''; }, 260);
+                } else if (lineObj.fx === 'shake') {
+                    stageEl.style.transform = 'translateX(-8px)';
+                    setTimeout(() => { stageEl.style.transform = 'translateX(8px)'; }, 70);
+                    setTimeout(() => { stageEl.style.transform = 'translateX(-5px)'; }, 140);
+                    setTimeout(() => { stageEl.style.transform = ''; }, 210);
+                }
+            }
+
+            // 渲染當下舞台上的立繪差分（沒有立繪差分時保持完全乾淨，不顯示任何圓形頭像）
+            const castRow = document.getElementById('vn-player-cast-row');
+            const activeEntries = Object.values(lineObj.stageState || {});
+            if (activeEntries.length === 0) {
+                castRow.innerHTML = '';
+            } else {
+                castRow.innerHTML = activeEntries.map(entry => {
+                    const isSpeaking = !lineObj.charId || entry.charId === lineObj.charId;
+                    return `
+                    <div class="h-[85%] max-h-[540px] flex items-end justify-center transition-all duration-300 ${isSpeaking ? 'opacity-100 scale-100 brightness-105' : 'opacity-55 scale-95 brightness-75'}">
+                        <img src="${entry.image}" alt="${escapeHTML(entry.name)}" class="max-h-full w-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.85)]">
+                    </div>`;
+                }).join('');
+            }
+
+            clearInterval(vnTypeTimer);
+            vnIsTyping = true;
+            vnFullLineText = lineObj.text;
+            const dialogueEl = document.getElementById('vn-player-dialogue');
+            dialogueEl.textContent = '';
+
+            let idx = 0;
+            vnTypeTimer = setInterval(() => {
+                idx++;
+                dialogueEl.textContent = vnFullLineText.slice(0, idx);
+                if (idx >= vnFullLineText.length) {
+                    clearInterval(vnTypeTimer);
+                    vnIsTyping = false;
+                }
+            }, 24);
+        }
+
+        function vnAdvanceStep() {
+            if (!document.getElementById('vn-player-choices-overlay').classList.contains('hidden')) return;
+
+            if (vnIsTyping) {
+                clearInterval(vnTypeTimer);
+                vnIsTyping = false;
+                document.getElementById('vn-player-dialogue').textContent = vnFullLineText;
+                return;
+            }
+
+            if (vnLineIdx < vnLines.length - 1) {
+                vnLineIdx++;
+                vnRenderCurrentLine();
+            } else {
+                vnShowEndOfNodeChoices();
+            }
+        }
+
+        function vnShowEndOfNodeChoices() {
+            const proj = getActiveProject();
+            const currentNode = proj.nodes.find(n => n.id === vnCurrentNodeId);
+            const nextIds = (currentNode && currentNode.nextNodes) ? currentNode.nextNodes : [];
+            const overlay = document.getElementById('vn-player-choices-overlay');
+            const list = document.getElementById('vn-player-choices-list');
+
+            if (nextIds.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center text-sm text-slate-300 mb-3">── 本路線已抵達目前劇本終點 ──</div>
+                    <button onclick="vnRestartCurrentNode()" class="w-full py-3 px-4 rounded-xl bg-atelier-surface hover:bg-atelier-card border border-amber-500/40 text-sm font-bold text-amber-300">
+                        ↺ 重新播放本幕
+                    </button>
+                    <button onclick="closeVNPlayer()" class="w-full py-3 px-4 rounded-xl bg-emerald-500 text-slate-950 text-sm font-bold">
+                        ✓ 返回 Story Atelier 繼續編輯
+                    </button>`;
+            } else {
+                list.innerHTML = nextIds.map(nid => {
+                    const target = proj.nodes.find(n => n.id === nid);
+                    if (!target) return '';
+                    const reqMem = target.memoryReqId ? proj.memories.find(m => m.id === target.memoryReqId) : null;
+                    const memBadge = reqMem
+                        ? `<span class="ml-2 px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[11px]">需記憶：${escapeHTML(reqMem.title)}</span>`
+                        : '';
+                    return `
+                    <button onclick="vnLoadNode('${target.id}')" class="w-full text-left p-4 rounded-xl bg-atelier-surface/95 hover:bg-atelier-card border border-amber-500/50 hover:border-amber-400 transition shadow-xl">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-bold text-sm sm:text-base text-slate-100">→ ${escapeHTML(target.title)}</span>
+                            ${memBadge}
+                        </div>
+                        ${target.summary ? `<div class="text-xs text-slate-400 mt-1 line-clamp-1">${escapeHTML(target.summary)}</div>` : ''}
+                    </button>`;
+                }).join('');
+            }
+
+            overlay.classList.remove('hidden');
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (!document.getElementById('vn-player-modal').classList.contains('hidden')) {
+                if (e.code === 'Space' || e.code === 'Enter') {
+                    e.preventDefault();
+                    vnAdvanceStep();
+                } else if (e.code === 'Escape') {
+                    closeVNPlayer();
+                }
+            }
+        });
+
         window.onload = function() {
             plotCanvasCtrl = new InteractivePanZoomCanvas('plot-canvas-viewport', 'plot-canvas-world', 'plot-canvas-zoom-label');
             relCanvasCtrl = new InteractivePanZoomCanvas('rel-canvas-viewport', 'rel-canvas-world', 'rel-canvas-zoom-label');
+            updateRollbackButtonVisibility();
             switchTab('overview');
             setPlotViewMode('list');
             setCharViewMode('list');
